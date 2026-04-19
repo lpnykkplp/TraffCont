@@ -51,10 +51,14 @@ app.use(async (req, res, next) => {
 const pejabatRoutes = require('./routes/pejabat');
 const scanRoutes = require('./routes/scan');
 const dashboardRoutes = require('./routes/dashboard');
+const tamuRoutes = require('./routes/tamu');
+const laporanRoutes = require('./routes/laporan');
 
 app.use('/api/pejabat', pejabatRoutes);
 app.use('/api/scan', scanRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/tamu', tamuRoutes);
+app.use('/api/laporan', laporanRoutes);
 
 // Export app for Vercel serverless
 module.exports = app;
