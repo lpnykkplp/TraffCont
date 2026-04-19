@@ -33,10 +33,19 @@ const connectDB = async () => {
         console.log('MongoDB Connected');
     } catch (err) {
         console.error('MongoDB connection error:', err);
+        throw err;
     }
 };
-connectDB();
 
+// Ensure DB is connected before handling any request (critical for serverless)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(500).json({ message: 'Database connection failed' });
+    }
+});
 
 // Routes
 const pejabatRoutes = require('./routes/pejabat');
