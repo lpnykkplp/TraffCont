@@ -7,13 +7,17 @@ import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3, Lo
 const Laporan = () => {
   const [periode, setPeriode] = useState('harian');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [tanggalAkhir, setTanggalAkhir] = useState(new Date().toISOString().split('T')[0]);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchLaporan = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/laporan?periode=${periode}&tanggal=${tanggal}`);
+      const url = periode === 'rentang' 
+        ? `/api/laporan?periode=${periode}&tanggal=${tanggal}&tanggal_akhir=${tanggalAkhir}`
+        : `/api/laporan?periode=${periode}&tanggal=${tanggal}`;
+      const res = await api.get(url);
       setData(res.data);
     } catch (err) {
       console.error(err);
@@ -27,12 +31,13 @@ const Laporan = () => {
     const d = new Date(tanggal);
     if (periode === 'harian') return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     if (periode === 'bulanan') return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    if (periode === 'rentang') return `${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} s/d ${new Date(tanggalAkhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`;
     return d.getFullYear().toString();
   };
 
   const formatTime = (waktu) => {
     if (!waktu) return '-';
-    return new Date(waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return new Date(waktu).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const exportPDF = () => {
@@ -77,7 +82,7 @@ const Laporan = () => {
 
       autoTable(doc, {
         startY: 59,
-        head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
+        head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Tanggal & Waktu']],
         body: detailRows,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
@@ -171,26 +176,36 @@ const Laporan = () => {
 
         {/* Filter */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-            {['harian', 'bulanan', 'tahunan'].map(p => (
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-wrap sm:flex-nowrap">
+            {['harian', 'bulanan', 'rentang'].map(p => (
               <button key={p} onClick={() => setPeriode(p)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   periode === p ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}>
-                {p.charAt(0).toUpperCase() + p.slice(1)}
+                {p === 'rentang' ? 'Pilih Tanggal' : p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
             ))}
           </div>
-          <div className="relative flex-1 max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Calendar size={16} /></div>
-            <input type={periode === 'tahunan' ? 'number' : periode === 'bulanan' ? 'month' : 'date'}
-              value={periode === 'tahunan' ? new Date(tanggal).getFullYear() : periode === 'bulanan' ? tanggal.substring(0, 7) : tanggal}
-              onChange={(e) => {
-                if (periode === 'tahunan') setTanggal(e.target.value + '-01-01');
-                else if (periode === 'bulanan') setTanggal(e.target.value + '-01');
-                else setTanggal(e.target.value);
-              }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+          <div className="flex gap-2 flex-1 w-full sm:max-w-md">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Calendar size={16} /></div>
+              <input type={periode === 'bulanan' ? 'month' : 'date'}
+                value={periode === 'bulanan' ? tanggal.substring(0, 7) : tanggal}
+                onChange={(e) => {
+                  if (periode === 'bulanan') setTanggal(e.target.value + '-01');
+                  else setTanggal(e.target.value);
+                }}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+            {periode === 'rentang' && (
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><span className="text-xs font-bold pl-0.5">s/d</span></div>
+                <input type="date"
+                  value={tanggalAkhir}
+                  onChange={(e) => setTanggalAkhir(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+            )}
           </div>
           <button onClick={fetchLaporan} disabled={loading}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition-all text-sm disabled:opacity-70">
@@ -217,7 +232,7 @@ const Laporan = () => {
                       <th className="py-3 px-3 font-bold">Nama</th>
                       <th className="py-3 px-3 font-bold">Perangkat</th>
                       <th className="py-3 px-3 font-bold text-center">Status</th>
-                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Jam</th>
+                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Tanggal & Waktu</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -240,7 +255,7 @@ const Laporan = () => {
                           </span>
                         </td>
                         <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
-                          {r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          {r.waktu ? new Date(r.waktu).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
                         </td>
                       </tr>
                     )) : (

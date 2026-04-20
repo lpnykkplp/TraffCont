@@ -3,7 +3,7 @@ const router = express.Router();
 const LogAktivitas = require('../models/LogAktivitas');
 const Tamu = require('../models/Tamu');
 
-function getDateRange(periode, tanggal) {
+function getDateRange(periode, tanggal, tanggal_akhir) {
     const date = new Date(tanggal);
     let start, end;
     if (periode === 'harian') {
@@ -12,17 +12,21 @@ function getDateRange(periode, tanggal) {
     } else if (periode === 'bulanan') {
         start = new Date(date.getFullYear(), date.getMonth(), 1);
         end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-    } else if (periode === 'tahunan') {
-        start = new Date(date.getFullYear(), 0, 1);
-        end = new Date(date.getFullYear() + 1, 0, 1);
+    } else if (periode === 'rentang') {
+        start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const endDate = new Date(tanggal_akhir);
+        end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1);
+    } else {
+        start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
     }
     return { start, end };
 }
 
 router.get('/', async (req, res) => {
     try {
-        const { periode = 'harian', tanggal = new Date().toISOString() } = req.query;
-        const { start, end } = getDateRange(periode, tanggal);
+        const { periode = 'harian', tanggal = new Date().toISOString(), tanggal_akhir = new Date().toISOString() } = req.query;
+        const { start, end } = getDateRange(periode, tanggal, tanggal_akhir);
 
         // === PEJABAT detail records ===
         const pejabatLogs = await LogAktivitas.find({
