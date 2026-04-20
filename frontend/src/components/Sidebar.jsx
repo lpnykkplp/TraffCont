@@ -38,7 +38,7 @@ const Sidebar = () => {
       </nav>
       <div className="p-4 border-t border-gray-100">
         <div className="bg-gradient-to-tr from-blue-50 to-indigo-50 rounded-2xl p-4 text-center">
-          <p className="text-sm font-medium text-blue-900">Sistem P2U Lapas</p>
+          <p className="text-sm font-medium text-blue-900">Electronic Traffic Control</p>
           <p className="text-xs text-blue-600 mt-1">Versi 1.0.0</p>
         </div>
       </div>

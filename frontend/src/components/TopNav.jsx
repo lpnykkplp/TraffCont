@@ -5,7 +5,7 @@ const TopNav = () => {
   return (
     <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10 w-full relative">
       <div className="flex items-center">
-        <h2 className="text-lg font-semibold text-gray-800">P2U Scanner Gate</h2>
+        <h2 className="text-lg font-semibold text-gray-800">Electronic Traffic Control</h2>
       </div>
       <div className="flex items-center space-x-4">
         <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-full">
@@ -17,7 +17,7 @@ const TopNav = () => {
             AD
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-gray-700 leading-tight">Admin P2U</p>
+            <p className="text-sm font-semibold text-gray-700 leading-tight">Admin</p>
             <p className="text-xs text-gray-500">Petugas Jaga</p>
           </div>
         </div>

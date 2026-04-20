@@ -65,7 +65,7 @@ const Scan = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col items-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Scanner Pintu P2U</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Scanner Pintu Utama</h1>
         <p className="text-gray-500 text-center mb-8">Scan QR Code pejabat untuk merekam masuk atau keluarnya perangkat handphone.</p>
         
         <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-inner border-4 border-gray-100 relative bg-gray-900 mb-6 flex justify-center items-center">

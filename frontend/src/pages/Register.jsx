@@ -61,7 +61,7 @@ const Register = () => {
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
         <div className="mb-8 border-b border-gray-100 pb-6">
           <h1 className="text-2xl font-bold text-gray-900">Registrasi Pejabat & HP</h1>
-          <p className="text-gray-500 mt-2">Daftarkan pejabat baru beserta detail smartphone untuk mendapatkan QR Code akses P2U.</p>
+          <p className="text-gray-500 mt-2">Daftarkan pejabat baru beserta detail smartphone untuk mendapatkan QR Code akses.</p>
         </div>
 
         {error && (

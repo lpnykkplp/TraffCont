@@ -58,7 +58,7 @@ const DetailPejabat = () => {
         </head>
         <body>
           <div class="card">
-             <div class="title">P2U LAPAS ACCESS</div>
+             <div class="title">ELECTRONIC TRAFFIC CONTROL</div>
              <div class="subtitle">Valid untuk keluar/masuk HP</div>
              <div class="qr-container">
                <img src="${pejabat?.qr_code}" alt="QR Code" />

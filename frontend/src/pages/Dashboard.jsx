@@ -46,7 +46,7 @@ const Dashboard = () => {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Visual</h1>
-          <p className="text-gray-500 mt-1">Status dan Statistik Petugas P2U Hari Ini</p>
+          <p className="text-gray-500 mt-1">Status dan Statistik Electronic Traffic Control</p>
         </div>
         {!loading && (
           <span className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-full font-medium">

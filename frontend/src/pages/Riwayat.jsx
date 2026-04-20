@@ -24,7 +24,7 @@ const Riwayat = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Riwayat Lalu Lintas</h1>
-        <p className="text-gray-500 mt-1">Log aktivitas keluar masuk perangkat pejabat & tamu yang terekam sistem P2U.</p>
+        <p className="text-gray-500 mt-1">Log aktivitas keluar masuk perangkat pejabat & tamu yang terekam sistem.</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

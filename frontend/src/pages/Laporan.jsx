@@ -48,7 +48,7 @@ const Laporan = () => {
       doc.text('LAPORAN LALU LINTAS PERANGKAT ELEKTRONIK', 105, 18, { align: 'center' });
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('Unit Pengamanan Pintu Utama (P2U)', 105, 24, { align: 'center' });
+      doc.text('Pengamanan Pintu Utama', 105, 24, { align: 'center' });
 
       doc.setFontSize(9);
       doc.text('Periode: ' + periode.charAt(0).toUpperCase() + periode.slice(1), 14, 36);
@@ -131,7 +131,7 @@ const Laporan = () => {
 
       doc.setTextColor(150);
       doc.setFontSize(7);
-      doc.text('Dokumen ini digenerate otomatis oleh sistem P2U Scanner Gate.', 105, 285, { align: 'center' });
+      doc.text('Dokumen ini digenerate otomatis oleh sistem Electronic Traffic Control.', 105, 285, { align: 'center' });
 
       doc.save('Laporan_' + periode + '_' + tanggal + '.pdf');
     } catch (err) {

@@ -97,7 +97,7 @@ const InputTamu = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="mb-6 border-b border-gray-100 pb-4">
           <h1 className="text-2xl font-bold text-gray-900">Input Perangkat Tamu</h1>
-          <p className="text-gray-500 mt-1">Catat perangkat elektronik tamu yang melintas melalui P2U.</p>
+          <p className="text-gray-500 mt-1">Catat perangkat elektronik tamu yang melintas melalui Pintu Utama.</p>
         </div>
 
         {error && (
