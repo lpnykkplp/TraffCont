@@ -8,6 +8,7 @@ const Laporan = () => {
   const [periode, setPeriode] = useState('harian');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
   const [tanggalAkhir, setTanggalAkhir] = useState(new Date().toISOString().split('T')[0]);
+  const [filterKategori, setFilterKategori] = useState('Semua');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -65,24 +66,30 @@ const Laporan = () => {
       doc.setFont('helvetica', 'bold');
       doc.text('A. Detail Aktivitas', 14, 55);
 
-      const detailRows = (data.detail_records || []).map(function(r, i) {
+      const filteredDetailRecords = (data.detail_records || []).filter(r => {
+        if (filterKategori === 'Semua') return true;
+        return r.kategori === filterKategori;
+      });
+
+      const detailRows = filteredDetailRecords.map(function(r, i) {
         return [
+          r.waktu ? new Date(r.waktu).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-',
           String(i + 1),
           r.kategori,
           r.nama,
           r.perangkat,
           r.status === 'masuk' ? 'MASUK' : 'KELUAR',
-          formatTime(r.waktu)
+          r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'
         ];
       });
 
       if (detailRows.length === 0) {
-        detailRows.push(['-', '-', 'Tidak ada data', '-', '-', '-']);
+        detailRows.push(['-', '-', '-', 'Tidak ada data', '-', '-', '-']);
       }
 
       autoTable(doc, {
         startY: 59,
-        head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Tanggal & Waktu']],
+        head: [['Hari/Tanggal', 'No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
         body: detailRows,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
@@ -222,23 +229,46 @@ const Laporan = () => {
 
             {/* Table A: Detail */}
             <div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">A. Detail Aktivitas</h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">A. Detail Aktivitas</h3>
+                <select 
+                  value={filterKategori}
+                  onChange={(e) => setFilterKategori(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 cursor-pointer shadow-sm"
+                >
+                  <option value="Semua">Semua Kategori</option>
+                  <option value="Pejabat">Hanya Pejabat</option>
+                  <option value="Tamu">Hanya Tamu</option>
+                </select>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-indigo-50 text-indigo-800 text-xs uppercase tracking-wider">
-                      <th className="py-3 px-3 font-bold rounded-tl-xl w-10">No</th>
+                      <th className="py-3 px-3 font-bold rounded-tl-xl whitespace-nowrap">Hari/Tanggal</th>
+                      <th className="py-3 px-3 font-bold text-center w-10">No</th>
                       <th className="py-3 px-3 font-bold">Kategori</th>
                       <th className="py-3 px-3 font-bold">Nama</th>
                       <th className="py-3 px-3 font-bold">Perangkat</th>
                       <th className="py-3 px-3 font-bold text-center">Status</th>
-                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Tanggal & Waktu</th>
+                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Jam</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.detail_records && data.detail_records.length > 0 ? data.detail_records.map((r, i) => (
-                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
+                    {data.detail_records && (() => {
+                      const filtered = data.detail_records.filter(r => {
+                        if (filterKategori === 'Semua') return true;
+                        return r.kategori === filterKategori;
+                      });
+                      if (filtered.length === 0) {
+                        return <tr><td colSpan="7" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini untuk kategori tersebut.</td></tr>;
+                      }
+                      return filtered.map((r, i) => (
+                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-3 text-gray-700 font-medium text-xs whitespace-nowrap">
+                            {r.waktu ? new Date(r.waktu).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                          </td>
+                          <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
                         <td className="py-3 px-3">
                           <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                             r.kategori === 'Pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
@@ -254,13 +284,12 @@ const Laporan = () => {
                             {r.status.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
-                          {r.waktu ? new Date(r.waktu).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
-                        </td>
-                      </tr>
-                    )) : (
-                      <tr><td colSpan="6" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini.</td></tr>
-                    )}
+                          <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
+                            {r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>

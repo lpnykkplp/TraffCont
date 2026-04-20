@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -9,10 +9,22 @@ import DetailPejabat from './pages/DetailPejabat';
 import Riwayat from './pages/Riwayat';
 import InputTamu from './pages/InputTamu';
 import Laporan from './pages/Laporan';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 
 function App() {
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  useEffect(() => {
+    document.body.style.zoom = zoomLevel;
+    if (navigator.userAgent.toLowerCase().includes('firefox')) {
+      document.body.style.transform = `scale(${zoomLevel})`;
+      document.body.style.transformOrigin = 'top left';
+      document.body.style.width = `${100 / zoomLevel}%`;
+    }
+  }, [zoomLevel]);
   return (
-    <BrowserRouter>
+    <>
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
@@ -26,6 +38,23 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
+      <button 
+        onClick={() => setZoomLevel(prev => Math.min(prev + 0.1, 2))}
+        className="bg-white p-3 rounded-full shadow-lg border border-gray-200 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95"
+        aria-label="Zoom In"
+      >
+        <ZoomIn size={22} />
+      </button>
+      <button 
+        onClick={() => setZoomLevel(prev => Math.max(prev - 0.1, 0.5))}
+        className="bg-white p-3 rounded-full shadow-lg border border-gray-200 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95"
+        aria-label="Zoom Out"
+      >
+        <ZoomOut size={22} />
+      </button>
+    </div>
+    </>
   );
 }
 
