@@ -12,11 +12,11 @@ import Laporan from './pages/Laporan';
 
 
 function App() {
-  const [zoomLevel, setZoomLevel] = useState(window.innerWidth < 768 ? 0.75 : 1);
+  const [zoomLevel, setZoomLevel] = useState(window.innerWidth < 768 ? 0.67 : 1);
 
   useEffect(() => {
     const handleResize = () => {
-      setZoomLevel(window.innerWidth < 768 ? 0.75 : 1);
+      setZoomLevel(window.innerWidth < 768 ? 0.67 : 1);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
