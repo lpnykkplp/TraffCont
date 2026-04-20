@@ -15,67 +15,49 @@ router.get('/', async (req, res) => {
         const total_tamu = await Tamu.countDocuments();
         const tamu_dalam = await Tamu.countDocuments({ status: 'dalam' });
 
-        // Get 20 most recent pejabat logs
-        const pejabatLogs = await LogAktivitas.find()
+        // Get 20 most recent logs from LogAktivitas (now covers both Pejabat and Tamu)
+        const logs = await LogAktivitas.find()
             .sort({ waktu: -1 })
             .limit(20)
-            .populate('pejabat_id', 'nama jabatan merk_hp tipe_hp custom_id');
+            .populate('pejabat_id', 'nama jabatan merk_hp tipe_hp custom_id')
+            .populate('tamu_id', 'nama_tamu jabatan asal_instansi jenis_perangkat merk');
 
-        // Get 20 most recent tamu activities (those with waktu_masuk or waktu_keluar)
-        const tamuMasukLogs = await Tamu.find({ waktu_masuk: { $ne: null } })
-            .sort({ waktu_masuk: -1 })
-            .limit(20)
-            .select('nama_tamu jabatan asal_instansi jenis_perangkat merk waktu_masuk waktu_keluar status');
-
-        // Merge and format into unified activity list
-        const allActivities = [];
-
-        pejabatLogs.forEach(log => {
-            allActivities.push({
-                _id: log._id,
-                tipe: 'pejabat',
-                nama: log.pejabat_id ? log.pejabat_id.nama : 'Dihapus',
-                jabatan: log.pejabat_id ? log.pejabat_id.jabatan : '-',
-                perangkat: log.pejabat_id ? `${log.pejabat_id.merk_hp || ''} ${log.pejabat_id.tipe_hp || ''}`.trim() : '-',
-                custom_id: log.pejabat_id ? log.pejabat_id.custom_id : '-',
-                status: log.status,
-                waktu: log.waktu
-            });
-        });
-
-        tamuMasukLogs.forEach(t => {
-            // Add masuk event
-            if (t.waktu_masuk) {
-                allActivities.push({
-                    _id: t._id + '_masuk',
+        const recent_activities = logs.map(log => {
+            if (log.pejabat_id) {
+                return {
+                    _id: log._id,
+                    tipe: 'pejabat',
+                    nama: log.pejabat_id.nama,
+                    jabatan: log.pejabat_id.jabatan || '-',
+                    perangkat: `${log.pejabat_id.merk_hp || ''} ${log.pejabat_id.tipe_hp || ''}`.trim(),
+                    custom_id: log.pejabat_id.custom_id,
+                    status: log.status,
+                    waktu: log.waktu
+                };
+            } else if (log.tamu_id) {
+                return {
+                    _id: log._id,
                     tipe: 'tamu',
-                    nama: t.nama_tamu,
-                    jabatan: t.jabatan || '-',
-                    perangkat: `${t.jenis_perangkat} - ${t.merk}`,
-                    custom_id: t.asal_instansi,
-                    status: 'masuk',
-                    waktu: t.waktu_masuk
-                });
-            }
-            // Add keluar event
-            if (t.waktu_keluar) {
-                allActivities.push({
-                    _id: t._id + '_keluar',
-                    tipe: 'tamu',
-                    nama: t.nama_tamu,
-                    jabatan: t.jabatan || '-',
-                    perangkat: `${t.jenis_perangkat} - ${t.merk}`,
-                    custom_id: t.asal_instansi,
-                    status: 'keluar',
-
-                    waktu: t.waktu_keluar
-                });
+                    nama: log.tamu_id.nama_tamu,
+                    jabatan: log.tamu_id.jabatan || '-',
+                    perangkat: `${log.tamu_id.jenis_perangkat} - ${log.tamu_id.merk}`,
+                    custom_id: log.tamu_id.asal_instansi,
+                    status: log.status,
+                    waktu: log.waktu
+                };
+            } else {
+                return {
+                    _id: log._id,
+                    tipe: 'unknown',
+                    nama: 'Dihapus / Tidak Diketahui',
+                    jabatan: '-',
+                    perangkat: '-',
+                    custom_id: '-',
+                    status: log.status,
+                    waktu: log.waktu
+                };
             }
         });
-
-        // Sort all by time descending, take top 20
-        allActivities.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
-        const recent_activities = allActivities.slice(0, 20);
 
         res.json({
             total_pejabat,

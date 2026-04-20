@@ -73,8 +73,8 @@ const Laporan = () => {
 
       const detailRows = filteredDetailRecords.map(function(r, i) {
         return [
-          r.waktu ? new Date(r.waktu).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-',
           String(i + 1),
+          r.waktu ? new Date(r.waktu).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-',
           r.kategori,
           r.nama,
           r.perangkat,
@@ -89,12 +89,17 @@ const Laporan = () => {
 
       autoTable(doc, {
         startY: 59,
-        head: [['Hari/Tanggal', 'No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
+        head: [['No', 'Hari/Tanggal', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
         body: detailRows,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
         styles: { fontSize: 7, cellPadding: 2.5 },
-        columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 4: { halign: 'center' }, 5: { halign: 'center' } },
+        columnStyles: { 
+          0: { halign: 'center', cellWidth: 8 }, 
+          1: { cellWidth: 24 }, // Ensure Date is wide enough 
+          5: { halign: 'center' }, 
+          6: { halign: 'center' } 
+        },
       });
 
       // === TABEL B: RINGKASAN ===
@@ -245,8 +250,8 @@ const Laporan = () => {
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-indigo-50 text-indigo-800 text-xs uppercase tracking-wider">
-                      <th className="py-3 px-3 font-bold rounded-tl-xl whitespace-nowrap">Hari/Tanggal</th>
-                      <th className="py-3 px-3 font-bold text-center w-10">No</th>
+                      <th className="py-3 px-3 font-bold text-center w-10 rounded-tl-xl">No</th>
+                      <th className="py-3 px-3 font-bold whitespace-nowrap">Hari/Tanggal</th>
                       <th className="py-3 px-3 font-bold">Kategori</th>
                       <th className="py-3 px-3 font-bold">Nama</th>
                       <th className="py-3 px-3 font-bold">Perangkat</th>
@@ -265,10 +270,10 @@ const Laporan = () => {
                       }
                       return filtered.map((r, i) => (
                         <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
                           <td className="py-3 px-3 text-gray-700 font-medium text-xs whitespace-nowrap">
                             {r.waktu ? new Date(r.waktu).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                           </td>
-                          <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
                         <td className="py-3 px-3">
                           <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                             r.kategori === 'Pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'

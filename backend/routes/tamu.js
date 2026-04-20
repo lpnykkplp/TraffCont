@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Tamu = require('../models/Tamu');
+const LogAktivitas = require('../models/LogAktivitas');
 
 // Get all guest records (optionally filter by status)
 router.get('/', async (req, res) => {
@@ -47,6 +48,13 @@ router.put('/:id/masuk', async (req, res) => {
         tamu.waktu_masuk = new Date();
         tamu.waktu_keluar = null;
         await tamu.save();
+        
+        await new LogAktivitas({
+            tamu_id: tamu._id,
+            status: 'masuk',
+            waktu: new Date()
+        }).save();
+
         res.json({ message: 'Perangkat tamu berhasil dicatat MASUK', tamu });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -62,6 +70,13 @@ router.put('/:id/keluar', async (req, res) => {
         tamu.status = 'luar';
         tamu.waktu_keluar = new Date();
         await tamu.save();
+        
+        await new LogAktivitas({
+            tamu_id: tamu._id,
+            status: 'keluar',
+            waktu: new Date()
+        }).save();
+
         res.json({ message: 'Perangkat tamu berhasil dicatat KELUAR', tamu });
     } catch (err) {
         res.status(500).json({ message: err.message });
