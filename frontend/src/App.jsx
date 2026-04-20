@@ -14,19 +14,12 @@ import { ZoomIn, ZoomOut } from 'lucide-react';
 function App() {
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  useEffect(() => {
-    document.body.style.zoom = zoomLevel;
-    if (navigator.userAgent.toLowerCase().includes('firefox')) {
-      document.body.style.transform = `scale(${zoomLevel})`;
-      document.body.style.transformOrigin = 'top left';
-      document.body.style.width = `${100 / zoomLevel}%`;
-    }
-  }, [zoomLevel]);
+  // Removed body zoom to fix iOS glitches
   return (
     <>
       <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<Layout zoomLevel={zoomLevel} />}>
           <Route index element={<Dashboard />} />
           <Route path="register" element={<Register />} />
           <Route path="scan" element={<Scan />} />
