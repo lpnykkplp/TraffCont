@@ -189,47 +189,14 @@ const DetailPejabat = () => {
     windowPrint.document.close();
   };
 
-  const handleDownload = async () => {
-    if (!pejabat) return;
-
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    document.body.appendChild(container);
-
-    container.innerHTML = `
-      <div id="qr-render" style="
-        width: 320px;
-        background: #ffffff;
-        padding: 32px 24px;
-        text-align: center;
-        font-family: 'Segoe UI', Arial, sans-serif;
-      ">
-        <img src="${pejabat.qr_code}" style="width:240px;height:240px;display:block;margin:0 auto 16px;" />
-        <div style="font-size:18px;font-weight:800;color:#111827;">${pejabat.nama}</div>
-        <div style="font-size:13px;font-weight:500;color:#6b7280;margin-top:6px;">${pejabat.jabatan || '-'}</div>
-      </div>
-    `;
-
-    try {
-      const qrEl = container.querySelector('#qr-render');
-      const canvas = await html2canvas(qrEl, {
-        scale: 3,
-        useCORS: true,
-        logging: false,
-      });
-
-      const link = document.createElement('a');
-      link.download = `QR_${pejabat.nama.replace(/\s+/g, '_')}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (err) {
-      console.error('Failed to generate QR image:', err);
-      alert('Gagal mengunduh QR Code.');
-    } finally {
-      document.body.removeChild(container);
-    }
+  const handleDownload = () => {
+    if (!pejabat?.qr_code) return;
+    const a = document.createElement('a');
+    a.href = pejabat.qr_code;
+    a.download = `QR_Code_${pejabat.custom_id}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const downloadIdCard = async () => {
@@ -275,7 +242,7 @@ const DetailPejabat = () => {
         <div style="font-size:13px;font-weight:500;color:#bfdbfe;margin-top:4px;position:relative;z-index:1;">${pejabat.jabatan || '-'}</div>
         <div style="margin-top:18px;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;">
           <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(191,219,254,0.35),transparent);margin-bottom:14px;"></div>
-          <div style="font-size:13px;color:#dbeafe;font-weight:500;background:rgba(255,255,255,0.1);padding:6px 18px;border-radius:8px;border:1px solid rgba(191,219,254,0.2);">${pejabat.merk_hp} ${pejabat.tipe_hp}</div>
+          <div style="font-size:13px;color:#dbeafe;font-weight:500;background:rgba(255,255,255,0.1);padding:4px 18px;border-radius:8px;border:1px solid rgba(191,219,254,0.2);display:flex;align-items:center;justify-content:center;height:32px;line-height:normal;">${pejabat.merk_hp} ${pejabat.tipe_hp}</div>
         </div>
       </div>
     `;
