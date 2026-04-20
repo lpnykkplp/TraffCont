@@ -58,7 +58,7 @@ const Riwayat = () => {
                     </td>
                     <td className="py-4 px-6">
                       <p className="font-semibold text-gray-800">{log.nama}</p>
-                      <p className="text-xs text-gray-400 font-mono mt-0.5">{log.custom_id}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{log.jabatan || '-'}</p>
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-lg text-gray-700">

@@ -19,13 +19,13 @@ router.get('/', async (req, res) => {
         const pejabatLogs = await LogAktivitas.find()
             .sort({ waktu: -1 })
             .limit(20)
-            .populate('pejabat_id', 'nama merk_hp tipe_hp custom_id');
+            .populate('pejabat_id', 'nama jabatan merk_hp tipe_hp custom_id');
 
         // Get 20 most recent tamu activities (those with waktu_masuk or waktu_keluar)
         const tamuMasukLogs = await Tamu.find({ waktu_masuk: { $ne: null } })
             .sort({ waktu_masuk: -1 })
             .limit(20)
-            .select('nama_tamu asal_instansi jenis_perangkat merk waktu_masuk waktu_keluar status');
+            .select('nama_tamu jabatan asal_instansi jenis_perangkat merk waktu_masuk waktu_keluar status');
 
         // Merge and format into unified activity list
         const allActivities = [];
@@ -35,6 +35,7 @@ router.get('/', async (req, res) => {
                 _id: log._id,
                 tipe: 'pejabat',
                 nama: log.pejabat_id ? log.pejabat_id.nama : 'Dihapus',
+                jabatan: log.pejabat_id ? log.pejabat_id.jabatan : '-',
                 perangkat: log.pejabat_id ? `${log.pejabat_id.merk_hp || ''} ${log.pejabat_id.tipe_hp || ''}`.trim() : '-',
                 custom_id: log.pejabat_id ? log.pejabat_id.custom_id : '-',
                 status: log.status,
@@ -49,6 +50,7 @@ router.get('/', async (req, res) => {
                     _id: t._id + '_masuk',
                     tipe: 'tamu',
                     nama: t.nama_tamu,
+                    jabatan: t.jabatan || '-',
                     perangkat: `${t.jenis_perangkat} - ${t.merk}`,
                     custom_id: t.asal_instansi,
                     status: 'masuk',
@@ -61,9 +63,11 @@ router.get('/', async (req, res) => {
                     _id: t._id + '_keluar',
                     tipe: 'tamu',
                     nama: t.nama_tamu,
+                    jabatan: t.jabatan || '-',
                     perangkat: `${t.jenis_perangkat} - ${t.merk}`,
                     custom_id: t.asal_instansi,
                     status: 'keluar',
+
                     waktu: t.waktu_keluar
                 });
             }

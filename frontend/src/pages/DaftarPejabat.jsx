@@ -61,8 +61,8 @@ const DaftarPejabat = () => {
             <thead>
               <tr className="bg-white border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider">
                 <th className="py-4 px-6 font-semibold">Profil Pejabat</th>
+                <th className="py-4 px-6 font-semibold">Jabatan</th>
                 <th className="py-4 px-6 font-semibold">Perangkat</th>
-                <th className="py-4 px-6 font-semibold">ID / Scanner</th>
                 <th className="py-4 px-6 font-semibold">Status Saat Ini</th>
                 <th className="py-4 px-6 font-semibold text-right">Aksi</th>
               </tr>
@@ -89,13 +89,11 @@ const DaftarPejabat = () => {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <p className="text-sm font-medium text-gray-700">{p.merk_hp} {p.tipe_hp}</p>
-                      <p className="text-xs font-mono text-gray-400 mt-0.5">IMEI: {p.imei}</p>
+                      <p className="text-sm font-medium text-gray-700">{p.jabatan || '-'}</p>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-mono rounded-md border border-gray-200">
-                        {p.custom_id}
-                      </span>
+                      <p className="text-sm font-medium text-gray-700">{p.merk_hp} {p.tipe_hp}</p>
+                      <p className="text-xs font-mono text-gray-400 mt-0.5">IMEI: {p.imei}</p>
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${

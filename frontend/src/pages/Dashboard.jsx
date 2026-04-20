@@ -95,7 +95,7 @@ const Dashboard = () => {
                         </td>
                         <td className="py-4 px-4">
                           <p className="font-medium text-gray-800">{log.nama}</p>
-                          <p className="text-xs text-gray-400 font-mono mt-0.5">{log.custom_id}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{log.jabatan || '-'}</p>
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-xs font-semibold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg">{log.perangkat || '-'}</span>
