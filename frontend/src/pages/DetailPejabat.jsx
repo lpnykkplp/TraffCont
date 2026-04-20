@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
-import { ArrowLeft, Download, Printer, Smartphone, User, Hash, Box, Phone, Trash2, Pencil, Save, X } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { ArrowLeft, Download, Printer, Smartphone, User, Hash, Box, Phone, Trash2, Pencil, Save, X, ImageDown } from 'lucide-react';
 
 const DetailPejabat = () => {
   const { id } = useParams();
@@ -198,6 +199,75 @@ const DetailPejabat = () => {
     document.body.removeChild(a);
   };
 
+  const downloadIdCard = async () => {
+    if (!pejabat) return;
+
+    // Create off-screen container
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    document.body.appendChild(container);
+
+    container.innerHTML = `
+      <div id="id-card-render" style="
+        width: 400px;
+        background: linear-gradient(145deg, #3b6fa0 0%, #2c5a8a 40%, #1e4d7a 100%);
+        border-radius: 24px;
+        padding: 40px 36px 36px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      ">
+        <div style="
+          position: absolute; top: -60px; right: -60px;
+          width: 200px; height: 200px;
+          background: radial-gradient(circle, rgba(147,197,253,0.2) 0%, transparent 70%);
+          border-radius: 50%;
+        "></div>
+        <div style="
+          position: absolute; bottom: -40px; left: -40px;
+          width: 160px; height: 160px;
+          background: radial-gradient(circle, rgba(165,180,252,0.15) 0%, transparent 70%);
+          border-radius: 50%;
+        "></div>
+        <div style="width:50px;height:4px;background:linear-gradient(90deg,#93c5fd,#a5b4fc);border-radius:2px;margin:0 auto 14px;"></div>
+        <div style="font-size:16px;font-weight:800;letter-spacing:3px;color:#fff;text-transform:uppercase;margin-bottom:5px;position:relative;z-index:1;">ELECTRONIC TRAFFIC CONTROL</div>
+        <div style="font-size:12px;font-weight:500;color:#bfdbfe;letter-spacing:1px;margin-bottom:28px;position:relative;z-index:1;">Lalu Lintas Perangkat</div>
+        <div style="background:#fff;padding:20px;border-radius:16px;display:inline-block;box-shadow:0 4px 20px rgba(0,0,0,0.12);position:relative;z-index:1;">
+          <img src="${pejabat.qr_code}" style="width:220px;height:220px;display:block;" />
+        </div>
+        <div style="margin-top:24px;font-size:20px;font-weight:800;color:#fff;letter-spacing:0.5px;position:relative;z-index:1;">${pejabat.nama}</div>
+        <div style="font-size:13px;font-weight:500;color:#bfdbfe;margin-top:4px;position:relative;z-index:1;">${pejabat.jabatan || '-'}</div>
+        <div style="margin-top:18px;position:relative;z-index:1;">
+          <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(191,219,254,0.35),transparent);margin-bottom:14px;"></div>
+          <span style="font-size:13px;color:#dbeafe;font-weight:500;background:rgba(255,255,255,0.1);display:inline-block;padding:6px 18px;border-radius:8px;border:1px solid rgba(191,219,254,0.2);">${pejabat.merk_hp} ${pejabat.tipe_hp}</span>
+        </div>
+      </div>
+    `;
+
+    try {
+      const cardEl = container.querySelector('#id-card-render');
+      const canvas = await html2canvas(cardEl, {
+        scale: 3,
+        backgroundColor: null,
+        useCORS: true,
+        logging: false,
+      });
+
+      const link = document.createElement('a');
+      link.download = `ID_Card_${pejabat.nama.replace(/\s+/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Failed to generate ID card image:', err);
+      alert('Gagal mengunduh ID Card.');
+    } finally {
+      document.body.removeChild(container);
+    }
+  };
+
   const inputClass = "w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-gray-800 bg-blue-50/50";
   const displayClass = "font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100";
 
@@ -358,7 +428,13 @@ const DetailPejabat = () => {
                 onClick={handleDownload}
                 className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 py-3 px-4 rounded-xl font-medium shadow-sm transition-all"
               >
-                <Download size={18} /> Download QR Code PNG
+                <Download size={18} /> Download QR Code
+             </button>
+             <button 
+                onClick={downloadIdCard}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-3 px-4 rounded-xl font-medium shadow-md transition-all active:scale-95"
+              >
+                <ImageDown size={18} /> Download ID Card PNG
              </button>
           </div>
         </div>
