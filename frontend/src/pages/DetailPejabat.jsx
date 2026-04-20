@@ -46,29 +46,126 @@ const DetailPejabat = () => {
         <head>
           <title>Cetak ID Card - ${pejabat?.nama}</title>
           <style>
-            body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f3f4f6; }
-            .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 300px; border: 2px solid #e5e7eb; }
-            .title { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: #111827; }
-            .subtitle { font-size: 12px; color: #6b7280; margin-bottom: 20px; }
-            .qr-container { background: white; padding: 15px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-            img { width: 200px; height: 200px; }
-            .id-text { font-family: monospace; font-size: 14px; margin-top: 15px; font-weight: bold; color: #374151; background: #f3f4f6; padding: 8px; border-radius: 6px; }
-            .footer { margin-top: 20px; font-size: 10px; color: #9ca3af; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Inter', sans-serif;
+              display: flex; justify-content: center; align-items: center;
+              height: 100vh; margin: 0;
+              background-color: #f0f2f5;
+            }
+            .card {
+              width: 320px;
+              background: linear-gradient(145deg, #1e3a5f 0%, #0f2847 40%, #0a1f3d 100%);
+              border-radius: 20px;
+              padding: 32px 28px 28px;
+              text-align: center;
+              position: relative;
+              overflow: hidden;
+              box-shadow: 0 20px 60px rgba(15, 40, 71, 0.4);
+            }
+            .card::before {
+              content: '';
+              position: absolute;
+              top: -60px; right: -60px;
+              width: 200px; height: 200px;
+              background: radial-gradient(circle, rgba(99,179,237,0.15) 0%, transparent 70%);
+              border-radius: 50%;
+            }
+            .card::after {
+              content: '';
+              position: absolute;
+              bottom: -40px; left: -40px;
+              width: 160px; height: 160px;
+              background: radial-gradient(circle, rgba(129,140,248,0.12) 0%, transparent 70%);
+              border-radius: 50%;
+            }
+            .logo-line {
+              width: 40px; height: 3px;
+              background: linear-gradient(90deg, #60a5fa, #818cf8);
+              border-radius: 2px;
+              margin: 0 auto 12px;
+            }
+            .title {
+              font-size: 13px;
+              font-weight: 800;
+              letter-spacing: 2.5px;
+              color: #ffffff;
+              text-transform: uppercase;
+              margin-bottom: 4px;
+              position: relative;
+              z-index: 1;
+            }
+            .subtitle {
+              font-size: 10px;
+              font-weight: 500;
+              color: #93c5fd;
+              letter-spacing: 1px;
+              margin-bottom: 24px;
+              position: relative;
+              z-index: 1;
+            }
+            .qr-wrapper {
+              background: white;
+              padding: 16px;
+              border-radius: 14px;
+              display: inline-block;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+              position: relative;
+              z-index: 1;
+            }
+            .qr-wrapper img { width: 180px; height: 180px; display: block; }
+            .id-badge {
+              margin-top: 18px;
+              font-family: 'Courier New', monospace;
+              font-size: 14px;
+              font-weight: 700;
+              color: #ffffff;
+              background: linear-gradient(135deg, rgba(96,165,250,0.25), rgba(129,140,248,0.25));
+              border: 1px solid rgba(147,197,253,0.3);
+              padding: 8px 20px;
+              border-radius: 8px;
+              letter-spacing: 1.5px;
+              display: inline-block;
+              position: relative;
+              z-index: 1;
+            }
+            .info-section {
+              margin-top: 20px;
+              text-align: center;
+              position: relative;
+              z-index: 1;
+            }
+            .divider {
+              width: 100%; height: 1px;
+              background: linear-gradient(90deg, transparent, rgba(147,197,253,0.3), transparent);
+              margin-bottom: 14px;
+            }
+            .info-row {
+              font-size: 12px;
+              color: #cbd5e1;
+              margin-bottom: 4px;
+            }
+            .info-row b {
+              color: #e2e8f0;
+              font-weight: 600;
+            }
           </style>
         </head>
         <body>
           <div class="card">
+             <div class="logo-line"></div>
              <div class="title">ELECTRONIC TRAFFIC CONTROL</div>
-             <div class="subtitle">Valid untuk keluar/masuk HP</div>
-             <div class="qr-container">
+             <div class="subtitle">Lalu Lintas Perangkat</div>
+             <div class="qr-wrapper">
                <img src="${pejabat?.qr_code}" alt="QR Code" />
              </div>
-             <div class="id-text">${pejabat?.custom_id}</div>
-             <div style="margin-top: 15px; text-align: left; font-size: 12px; color: #4b5563;">
-                <b>Nama:</b> ${pejabat?.nama}<br/>
-                <b>HP:</b> ${pejabat?.merk_hp} ${pejabat?.tipe_hp}
+             <div class="id-badge">${pejabat?.custom_id}</div>
+             <div class="info-section">
+               <div class="divider"></div>
+               <div class="info-row"><b>${pejabat?.nama}</b></div>
+               <div class="info-row">${pejabat?.merk_hp} ${pejabat?.tipe_hp}</div>
              </div>
-             <div class="footer">Cetak: ${new Date().toLocaleDateString('id-ID')}</div>
           </div>
           <script>
             window.onload = () => { window.print(); window.close(); }
