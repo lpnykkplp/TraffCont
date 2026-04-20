@@ -87,15 +87,15 @@ const Laporan = () => {
         detailRows.push(['-', '-', '-', 'Tidak ada data', '-', '-', '-']);
       }
 
-      autoTable(doc, {
+        autoTable(doc, {
         startY: 59,
         head: [['No', 'Hari/Tanggal', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
         body: detailRows,
         theme: 'grid',
-        headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
+        headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold', halign: 'center' },
         styles: { fontSize: 7, cellPadding: 2.5 },
         columnStyles: { 
-          0: { halign: 'center', cellWidth: 8 }, 
+          0: { halign: 'center', cellWidth: 12 }, 
           1: { cellWidth: 24 }, // Ensure Date is wide enough 
           5: { halign: 'center' }, 
           6: { halign: 'center' } 
@@ -122,7 +122,7 @@ const Laporan = () => {
         head: [['Kategori', 'Jenis Perangkat', 'Masuk', 'Keluar', 'Selisih']],
         body: summaryRows,
         theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
+        headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold', halign: 'center' },
         styles: { fontSize: 8, cellPadding: 3 },
         columnStyles: { 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
         didParseCell: function(cellData) {
