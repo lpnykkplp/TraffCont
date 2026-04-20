@@ -68,6 +68,20 @@ router.put('/:id/keluar', async (req, res) => {
     }
 });
 
+// Update tamu details
+router.put('/:id', async (req, res) => {
+    try {
+        const { nama_tamu, jabatan, asal_instansi, jenis_perangkat, merk, keterangan } = req.body;
+        const updated = await Tamu.findByIdAndUpdate(req.params.id, {
+            nama_tamu, jabatan, asal_instansi, jenis_perangkat, merk, keterangan
+        }, { new: true });
+        if (!updated) return res.status(404).json({ message: 'Data tamu tidak ditemukan' });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 // Delete guest record
 router.delete('/:id', async (req, res) => {
     try {

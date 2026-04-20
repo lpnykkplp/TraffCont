@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
-import { ArrowLeft, Download, Printer, Smartphone, User, Hash, Box, Phone, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Smartphone, User, Hash, Box, Phone, Trash2, Pencil, Save, X } from 'lucide-react';
 
 const DetailPejabat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [pejabat, setPejabat] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Ref for the printable area
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
   const printRef = useRef();
 
   useEffect(() => {
@@ -38,8 +39,42 @@ const DetailPejabat = () => {
     }
   };
 
+  const startEdit = () => {
+    setEditData({
+      nama: pejabat.nama,
+      jabatan: pejabat.jabatan || '',
+      nomor_hp: pejabat.nomor_hp,
+      merk_hp: pejabat.merk_hp,
+      tipe_hp: pejabat.tipe_hp,
+      imei: pejabat.imei,
+    });
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setEditData({});
+  };
+
+  const handleEditChange = (e) => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await api.put(`/api/pejabat/${id}`, editData);
+      setPejabat(res.data);
+      setEditing(false);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menyimpan perubahan.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handlePrint = () => {
-    const printContent = printRef.current;
     const windowPrint = window.open('', '', 'width=800,height=600');
     windowPrint.document.write(`
       <html>
@@ -87,57 +122,34 @@ const DetailPejabat = () => {
               margin: 0 auto 12px;
             }
             .title {
-              font-size: 13px;
-              font-weight: 800;
-              letter-spacing: 2.5px;
-              color: #ffffff;
-              text-transform: uppercase;
-              margin-bottom: 4px;
-              position: relative;
-              z-index: 1;
+              font-size: 13px; font-weight: 800; letter-spacing: 2.5px;
+              color: #ffffff; text-transform: uppercase; margin-bottom: 4px;
+              position: relative; z-index: 1;
             }
             .subtitle {
-              font-size: 10px;
-              font-weight: 500;
-              color: #bfdbfe;
-              letter-spacing: 1px;
-              margin-bottom: 24px;
-              position: relative;
-              z-index: 1;
+              font-size: 10px; font-weight: 500; color: #bfdbfe;
+              letter-spacing: 1px; margin-bottom: 24px;
+              position: relative; z-index: 1;
             }
             .qr-wrapper {
-              background: white;
-              padding: 16px;
-              border-radius: 14px;
-              display: inline-block;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-              position: relative;
-              z-index: 1;
+              background: white; padding: 16px; border-radius: 14px;
+              display: inline-block; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+              position: relative; z-index: 1;
             }
             .qr-wrapper img { width: 180px; height: 180px; display: block; }
             .name-badge {
-              margin-top: 20px;
-              font-size: 16px;
-              font-weight: 800;
-              color: #ffffff;
-              letter-spacing: 0.5px;
-              position: relative;
-              z-index: 1;
+              margin-top: 20px; font-size: 16px; font-weight: 800;
+              color: #ffffff; letter-spacing: 0.5px;
+              position: relative; z-index: 1;
             }
             .jabatan-text {
-              font-size: 11px;
-              font-weight: 500;
-              color: #bfdbfe;
-              margin-top: 3px;
-              letter-spacing: 0.5px;
-              position: relative;
-              z-index: 1;
+              font-size: 11px; font-weight: 500; color: #bfdbfe;
+              margin-top: 3px; letter-spacing: 0.5px;
+              position: relative; z-index: 1;
             }
             .info-section {
-              margin-top: 16px;
-              text-align: center;
-              position: relative;
-              z-index: 1;
+              margin-top: 16px; text-align: center;
+              position: relative; z-index: 1;
             }
             .divider {
               width: 100%; height: 1px;
@@ -145,13 +157,9 @@ const DetailPejabat = () => {
               margin-bottom: 12px;
             }
             .device-text {
-              font-size: 11px;
-              color: #dbeafe;
-              font-weight: 500;
-              background: rgba(255,255,255,0.1);
-              display: inline-block;
-              padding: 5px 14px;
-              border-radius: 6px;
+              font-size: 11px; color: #dbeafe; font-weight: 500;
+              background: rgba(255,255,255,0.1); display: inline-block;
+              padding: 5px 14px; border-radius: 6px;
               border: 1px solid rgba(191,219,254,0.2);
             }
           </style>
@@ -190,6 +198,9 @@ const DetailPejabat = () => {
     document.body.removeChild(a);
   };
 
+  const inputClass = "w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-gray-800 bg-blue-50/50";
+  const displayClass = "font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100";
+
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
@@ -207,13 +218,41 @@ const DetailPejabat = () => {
           <ArrowLeft size={18} className="mr-2" />
           Kembali
         </button>
-        <button 
-          onClick={handleDelete}
-          className="flex items-center text-red-600 hover:text-white transition-colors bg-red-50 hover:bg-red-600 px-4 py-2 rounded-xl text-sm font-medium"
-        >
-          <Trash2 size={18} className="mr-2" />
-          Hapus Data
-        </button>
+        <div className="flex gap-2">
+          {!editing ? (
+            <button 
+              onClick={startEdit}
+              className="flex items-center text-blue-600 hover:text-white transition-colors bg-blue-50 hover:bg-blue-600 px-4 py-2 rounded-xl text-sm font-medium"
+            >
+              <Pencil size={18} className="mr-2" />
+              Edit
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={handleSave} disabled={saving}
+                className="flex items-center text-green-600 hover:text-white transition-colors bg-green-50 hover:bg-green-600 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
+              >
+                <Save size={18} className="mr-2" />
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button 
+                onClick={cancelEdit}
+                className="flex items-center text-gray-500 hover:text-gray-900 transition-colors bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-xl text-sm font-medium"
+              >
+                <X size={18} className="mr-2" />
+                Batal
+              </button>
+            </>
+          )}
+          <button 
+            onClick={handleDelete}
+            className="flex items-center text-red-600 hover:text-white transition-colors bg-red-50 hover:bg-red-600 px-4 py-2 rounded-xl text-sm font-medium"
+          >
+            <Trash2 size={18} className="mr-2" />
+            Hapus
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -233,29 +272,53 @@ const DetailPejabat = () => {
             <div className="space-y-4">
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><User size={14} /> Nama Lengkap</label>
-                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.nama}</p>
+                  {editing ? (
+                    <input name="nama" value={editData.nama} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className={displayClass}>{pejabat.nama}</p>
+                  )}
                </div>
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">Jabatan</label>
-                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.jabatan || '-'}</p>
+                  {editing ? (
+                    <input name="jabatan" value={editData.jabatan} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className={displayClass}>{pejabat.jabatan || '-'}</p>
+                  )}
                </div>
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Phone size={14} /> Nomor WA/HP</label>
-                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.nomor_hp}</p>
+                  {editing ? (
+                    <input name="nomor_hp" value={editData.nomor_hp} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className={displayClass}>{pejabat.nomor_hp}</p>
+                  )}
                </div>
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Smartphone size={14} /> Merek HP</label>
-                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.merk_hp}</p>
+                  {editing ? (
+                    <input name="merk_hp" value={editData.merk_hp} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className={displayClass}>{pejabat.merk_hp}</p>
+                  )}
                </div>
             </div>
             <div className="space-y-4">
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Box size={14} /> Tipe HP</label>
-                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.tipe_hp}</p>
+                  {editing ? (
+                    <input name="tipe_hp" value={editData.tipe_hp} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className={displayClass}>{pejabat.tipe_hp}</p>
+                  )}
                </div>
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Hash size={14} /> Nomor IMEI</label>
-                  <p className="font-mono text-sm font-semibold text-gray-800 bg-gray-50 py-2.5 px-3 rounded-lg border border-gray-100">{pejabat.imei}</p>
+                  {editing ? (
+                    <input name="imei" value={editData.imei} onChange={handleEditChange} className={inputClass} />
+                  ) : (
+                    <p className="font-mono text-sm font-semibold text-gray-800 bg-gray-50 py-2.5 px-3 rounded-lg border border-gray-100">{pejabat.imei}</p>
+                  )}
                </div>
             </div>
             

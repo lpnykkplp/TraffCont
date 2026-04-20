@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { UserPlus, LogIn, LogOut, Trash2, Building2, Smartphone, Laptop, Tablet, HardDrive, Usb, Package, AlertCircle, CheckCircle } from 'lucide-react';
+import { UserPlus, LogIn, LogOut, Trash2, Building2, Smartphone, Laptop, Tablet, HardDrive, Usb, Package, AlertCircle, CheckCircle, Pencil, Save, X } from 'lucide-react';
 
 const jenisIcons = {
   HP: <Smartphone size={16} />,
@@ -25,6 +25,11 @@ const InputTamu = () => {
     merk: '',
     keterangan: '',
   });
+
+  // Edit modal state
+  const [editingTamu, setEditingTamu] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchTamu = async () => {
     try {
@@ -89,11 +94,97 @@ const InputTamu = () => {
     }
   };
 
+  const openEdit = (tamu) => {
+    setEditingTamu(tamu._id);
+    setEditData({
+      nama_tamu: tamu.nama_tamu,
+      jabatan: tamu.jabatan || '',
+      asal_instansi: tamu.asal_instansi,
+      jenis_perangkat: tamu.jenis_perangkat,
+      merk: tamu.merk,
+      keterangan: tamu.keterangan || '',
+    });
+  };
+
+  const handleEditChange = (e) => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const saveEdit = async () => {
+    setEditSaving(true);
+    try {
+      await api.put(`/api/tamu/${editingTamu}`, editData);
+      setEditingTamu(null);
+      fetchTamu();
+    } catch (err) {
+      alert('Gagal menyimpan perubahan');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   const dalamList = tamuList.filter(t => t.status === 'dalam');
-  const luarList = tamuList.filter(t => t.status === 'luar');
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Edit Modal */}
+      {editingTamu && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4" onClick={() => setEditingTamu(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-lg font-bold text-gray-900">Edit Data Tamu</h3>
+              <button onClick={() => setEditingTamu(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Tamu</label>
+                <input type="text" name="nama_tamu" value={editData.nama_tamu} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
+                <input type="text" name="jabatan" value={editData.jabatan} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Asal Instansi</label>
+                <input type="text" name="asal_instansi" value={editData.asal_instansi} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Perangkat</label>
+                <select name="jenis_perangkat" value={editData.jenis_perangkat} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                  {['HP', 'Laptop', 'Tablet', 'Flashdisk', 'Hardisk', 'Lainnya'].map(j => (
+                    <option key={j} value={j}>{j}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Merek</label>
+                <input type="text" name="merk" value={editData.merk} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+                <input type="text" name="keterangan" value={editData.keterangan} onChange={handleEditChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={saveEdit} disabled={editSaving}
+                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-all text-sm disabled:opacity-50">
+                <Save size={16} /> {editSaving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button onClick={() => setEditingTamu(null)}
+                className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-all text-sm">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Form Input */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="mb-6 border-b border-gray-100 pb-4">
@@ -189,7 +280,7 @@ const InputTamu = () => {
                   <td className="py-3 px-4 text-gray-500 text-xs">
                     {t.waktu_masuk ? new Date(t.waktu_masuk).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
                   </td>
-                  <td className="py-3 px-4 text-right">
+                  <td className="py-3 px-4 text-right flex gap-2 justify-end">
                     <button onClick={() => handleKeluar(t._id)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors border border-green-200">
                       <LogOut size={14} /> Keluar
@@ -204,7 +295,7 @@ const InputTamu = () => {
         </div>
       </div>
 
-      {/* Tabel semua tamu (riwayat) */}
+      {/* Tabel semua tamu */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-2">
           <Package size={18} className="text-gray-600" />
@@ -242,6 +333,10 @@ const InputTamu = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right flex gap-2 justify-end">
+                    <button onClick={() => openEdit(t)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors border border-blue-200">
+                      <Pencil size={14} /> Edit
+                    </button>
                     {t.status === 'luar' && (
                       <button onClick={() => handleMasuk(t._id)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors border border-orange-200">
