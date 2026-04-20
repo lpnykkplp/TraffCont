@@ -1,22 +1,22 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, QrCode, UserPlus, History, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, QrCode, UserCheck, UserPlus, History, FileText } from 'lucide-react';
 
 const BottomNav = () => {
-
-  const navItems = [
-    { path: '/', name: 'Dash', icon: <LayoutDashboard size={22} /> },
-    { path: '/register', name: 'Reg', icon: <UserPlus size={22} /> },
-    { path: '/pejabat', name: 'Data', icon: <Users size={22} /> },
-    { path: '/scan', name: 'Scan', icon: <QrCode size={26} /> },
-    { path: '/riwayat', name: 'Riwayat', icon: <History size={22} /> },
-    { path: '/laporan', name: 'Rekap', icon: <FileText size={22} /> },
+  const mainItems = [
+    { path: '/', name: 'Dash', icon: <LayoutDashboard size={18} /> },
+    { path: '/register', name: 'Daftar', icon: <UserPlus size={18} /> },
+    { path: '/pejabat', name: 'Data', icon: <Users size={18} /> },
+    { path: '/scan', name: 'Scan', icon: <QrCode size={24} /> },
+    { path: '/tamu', name: 'Tamu', icon: <UserCheck size={18} /> },
+    { path: '/riwayat', name: 'Riwayat', icon: <History size={18} /> },
+    { path: '/laporan', name: 'Laporan', icon: <FileText size={18} /> },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-      <nav className="flex justify-around items-center h-16 w-full px-1">
-        {navItems.map((item) => {
+      <nav className="flex justify-between items-center h-16 w-full px-1 mx-auto">
+        {mainItems.map((item) => {
           const isScan = item.path === '/scan';
           return (
             <NavLink key={item.path} to={item.path}
@@ -34,7 +34,7 @@ const BottomNav = () => {
                   ) : (
                     <>
                       {item.icon}
-                      <span className={`text-[9px] mt-1 font-medium whitespace-nowrap overflow-hidden text-clip w-full text-center px-0.5 ${isActive ? 'font-semibold' : ''}`}>{item.name}</span>
+                      <span className={`text-[9px] mt-1 font-medium truncate w-full text-center px-0.5 ${isActive ? 'font-bold' : ''}`}>{item.name}</span>
                     </>
                   )}
                 </>
