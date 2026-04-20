@@ -12,7 +12,7 @@ export default defineConfig({
     basicSsl(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.jpg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Electronic Traffic Control',
         short_name: 'TrafficControl',
@@ -22,9 +22,15 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'icon.jpg',
-            sizes: '192x192 512x512',
-            type: 'image/jpeg',
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
