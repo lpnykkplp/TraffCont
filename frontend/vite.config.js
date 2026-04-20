@@ -12,7 +12,7 @@ export default defineConfig({
     basicSsl(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['icon.jpg'],
       manifest: {
         name: 'Electronic Traffic Control',
         short_name: 'TrafficControl',
@@ -22,9 +22,9 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'favicon.svg',
+            src: 'icon.jpg',
             sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            type: 'image/jpeg',
             purpose: 'any maskable'
           }
         ]
