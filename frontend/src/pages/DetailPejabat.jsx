@@ -45,7 +45,7 @@ const DetailPejabat = () => {
       <html>
         <head>
           <title>Cetak ID Card - ${pejabat?.nama}</title>
-          <style>
+           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
@@ -56,20 +56,20 @@ const DetailPejabat = () => {
             }
             .card {
               width: 320px;
-              background: linear-gradient(145deg, #1e3a5f 0%, #0f2847 40%, #0a1f3d 100%);
+              background: linear-gradient(145deg, #3b6fa0 0%, #2c5a8a 40%, #1e4d7a 100%);
               border-radius: 20px;
               padding: 32px 28px 28px;
               text-align: center;
               position: relative;
               overflow: hidden;
-              box-shadow: 0 20px 60px rgba(15, 40, 71, 0.4);
+              box-shadow: 0 20px 60px rgba(30, 77, 122, 0.35);
             }
             .card::before {
               content: '';
               position: absolute;
               top: -60px; right: -60px;
               width: 200px; height: 200px;
-              background: radial-gradient(circle, rgba(99,179,237,0.15) 0%, transparent 70%);
+              background: radial-gradient(circle, rgba(147,197,253,0.2) 0%, transparent 70%);
               border-radius: 50%;
             }
             .card::after {
@@ -77,12 +77,12 @@ const DetailPejabat = () => {
               position: absolute;
               bottom: -40px; left: -40px;
               width: 160px; height: 160px;
-              background: radial-gradient(circle, rgba(129,140,248,0.12) 0%, transparent 70%);
+              background: radial-gradient(circle, rgba(165,180,252,0.15) 0%, transparent 70%);
               border-radius: 50%;
             }
             .logo-line {
               width: 40px; height: 3px;
-              background: linear-gradient(90deg, #60a5fa, #818cf8);
+              background: linear-gradient(90deg, #93c5fd, #a5b4fc);
               border-radius: 2px;
               margin: 0 auto 12px;
             }
@@ -99,7 +99,7 @@ const DetailPejabat = () => {
             .subtitle {
               font-size: 10px;
               font-weight: 500;
-              color: #93c5fd;
+              color: #bfdbfe;
               letter-spacing: 1px;
               margin-bottom: 24px;
               position: relative;
@@ -110,45 +110,49 @@ const DetailPejabat = () => {
               padding: 16px;
               border-radius: 14px;
               display: inline-block;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+              box-shadow: 0 4px 20px rgba(0,0,0,0.12);
               position: relative;
               z-index: 1;
             }
             .qr-wrapper img { width: 180px; height: 180px; display: block; }
-            .id-badge {
-              margin-top: 18px;
-              font-family: 'Courier New', monospace;
-              font-size: 14px;
-              font-weight: 700;
+            .name-badge {
+              margin-top: 20px;
+              font-size: 16px;
+              font-weight: 800;
               color: #ffffff;
-              background: linear-gradient(135deg, rgba(96,165,250,0.25), rgba(129,140,248,0.25));
-              border: 1px solid rgba(147,197,253,0.3);
-              padding: 8px 20px;
-              border-radius: 8px;
-              letter-spacing: 1.5px;
-              display: inline-block;
+              letter-spacing: 0.5px;
+              position: relative;
+              z-index: 1;
+            }
+            .jabatan-text {
+              font-size: 11px;
+              font-weight: 500;
+              color: #bfdbfe;
+              margin-top: 3px;
+              letter-spacing: 0.5px;
               position: relative;
               z-index: 1;
             }
             .info-section {
-              margin-top: 20px;
+              margin-top: 16px;
               text-align: center;
               position: relative;
               z-index: 1;
             }
             .divider {
               width: 100%; height: 1px;
-              background: linear-gradient(90deg, transparent, rgba(147,197,253,0.3), transparent);
-              margin-bottom: 14px;
+              background: linear-gradient(90deg, transparent, rgba(191,219,254,0.35), transparent);
+              margin-bottom: 12px;
             }
-            .info-row {
-              font-size: 12px;
-              color: #cbd5e1;
-              margin-bottom: 4px;
-            }
-            .info-row b {
-              color: #e2e8f0;
-              font-weight: 600;
+            .device-text {
+              font-size: 11px;
+              color: #dbeafe;
+              font-weight: 500;
+              background: rgba(255,255,255,0.1);
+              display: inline-block;
+              padding: 5px 14px;
+              border-radius: 6px;
+              border: 1px solid rgba(191,219,254,0.2);
             }
           </style>
         </head>
@@ -160,11 +164,11 @@ const DetailPejabat = () => {
              <div class="qr-wrapper">
                <img src="${pejabat?.qr_code}" alt="QR Code" />
              </div>
-             <div class="id-badge">${pejabat?.custom_id}</div>
+             <div class="name-badge">${pejabat?.nama}</div>
+             <div class="jabatan-text">${pejabat?.jabatan || '-'}</div>
              <div class="info-section">
                <div class="divider"></div>
-               <div class="info-row"><b>${pejabat?.nama}</b></div>
-               <div class="info-row">${pejabat?.merk_hp} ${pejabat?.tipe_hp}</div>
+               <span class="device-text">${pejabat?.merk_hp} ${pejabat?.tipe_hp}</span>
              </div>
           </div>
           <script>
@@ -230,6 +234,10 @@ const DetailPejabat = () => {
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><User size={14} /> Nama Lengkap</label>
                   <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.nama}</p>
+               </div>
+               <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">Jabatan</label>
+                  <p className="font-semibold text-gray-800 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">{pejabat.jabatan || '-'}</p>
                </div>
                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Phone size={14} /> Nomor WA/HP</label>

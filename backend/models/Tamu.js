@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const tamuSchema = new mongoose.Schema({
     nama_tamu: { type: String, required: true },
+    jabatan: { type: String, default: '' },
     asal_instansi: { type: String, required: true },
     jenis_perangkat: { 
         type: String, 

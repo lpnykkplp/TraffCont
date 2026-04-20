@@ -19,6 +19,7 @@ const InputTamu = () => {
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     nama_tamu: '',
+    jabatan: '',
     asal_instansi: '',
     jenis_perangkat: 'HP',
     merk: '',
@@ -50,7 +51,7 @@ const InputTamu = () => {
     try {
       await api.post('/api/tamu', formData);
       setSuccess('Data tamu berhasil disimpan!');
-      setFormData({ nama_tamu: '', asal_instansi: '', jenis_perangkat: 'HP', merk: '', keterangan: '' });
+      setFormData({ nama_tamu: '', jabatan: '', asal_instansi: '', jenis_perangkat: 'HP', merk: '', keterangan: '' });
       fetchTamu();
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal menyimpan data tamu.');
@@ -116,6 +117,11 @@ const InputTamu = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Nama Tamu</label>
             <input type="text" name="nama_tamu" required value={formData.nama_tamu} onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Nama pengunjung" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
+            <input type="text" name="jabatan" value={formData.jabatan} onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Jabatan tamu" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Asal Instansi</label>

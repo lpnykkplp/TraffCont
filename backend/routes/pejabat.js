@@ -46,7 +46,7 @@ router.get('/:id', async (req, res) => {
 // Create a new official
 router.post('/', upload.single('foto_hp'), async (req, res) => {
     try {
-        const { nama, nomor_hp, merk_hp, tipe_hp, imei } = req.body;
+        const { nama, jabatan, nomor_hp, merk_hp, tipe_hp, imei } = req.body;
         
         // Generate custom ID "LAPAS-USER-XXXX"
         const count = await Pejabat.countDocuments();
@@ -57,6 +57,7 @@ router.post('/', upload.single('foto_hp'), async (req, res) => {
 
         const newPejabat = new Pejabat({
             nama,
+            jabatan,
             nomor_hp,
             merk_hp,
             tipe_hp,

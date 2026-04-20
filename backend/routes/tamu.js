@@ -19,9 +19,10 @@ router.get('/', async (req, res) => {
 // Create new guest entry (status starts as 'luar' - belum masuk)
 router.post('/', async (req, res) => {
     try {
-        const { nama_tamu, asal_instansi, jenis_perangkat, merk, keterangan, petugas } = req.body;
+        const { nama_tamu, jabatan, asal_instansi, jenis_perangkat, merk, keterangan, petugas } = req.body;
         const newTamu = new Tamu({
             nama_tamu,
+            jabatan,
             asal_instansi,
             jenis_perangkat,
             merk,

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const pejabatSchema = new mongoose.Schema({
     nama: { type: String, required: true },
+    jabatan: { type: String, default: '' },
     nomor_hp: { type: String, required: true },
     merk_hp: { type: String, required: true },
     tipe_hp: { type: String, required: true },
