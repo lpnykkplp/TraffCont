@@ -241,8 +241,8 @@ const DetailPejabat = () => {
         <div style="margin-top:24px;font-size:20px;font-weight:800;color:#fff;letter-spacing:0.5px;position:relative;z-index:1;">${pejabat.nama}</div>
         <div style="font-size:13px;font-weight:500;color:#bfdbfe;margin-top:4px;position:relative;z-index:1;">${pejabat.jabatan || '-'}</div>
         <div style="margin-top:18px;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;">
-          <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(191,219,254,0.35),transparent);margin-bottom:14px;"></div>
-          <div style="font-size:13px;color:#dbeafe;font-weight:500;background:rgba(255,255,255,0.1);padding:4px 18px;border-radius:8px;border:1px solid rgba(191,219,254,0.2);display:flex;align-items:center;justify-content:center;height:32px;line-height:normal;">${pejabat.merk_hp} ${pejabat.tipe_hp}</div>
+          <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(191,219,254,0.35),transparent);margin-bottom:12px;"></div>
+          <div style="font-size:13px;color:#dbeafe;font-weight:500;letter-spacing:0.5px;">${pejabat.merk_hp} ${pejabat.tipe_hp}</div>
         </div>
       </div>
     `;
