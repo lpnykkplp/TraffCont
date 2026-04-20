@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import api from '../lib/api';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3, LogIn, LogOut } from 'lucide-react';
 
 const Laporan = () => {
@@ -33,106 +35,109 @@ const Laporan = () => {
     return new Date(waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const exportPDF = async () => {
+  const exportPDF = () => {
     if (!data) return;
-    
-    // Dynamic import to avoid SSR issues
-    const { jsPDF } = await import('jspdf');
-    const autoTableModule = await import('jspdf-autotable');
-    
-    const doc = new jsPDF();
-    const periodeLabel = getPeriodeLabel();
 
-    // Header
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('LAPORAN LALU LINTAS PERANGKAT ELEKTRONIK', 105, 18, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Unit Pengamanan Pintu Utama (P2U)', 105, 24, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.text(`Periode: ${periode.charAt(0).toUpperCase() + periode.slice(1)}`, 14, 36);
-    doc.text(`Tanggal: ${periodeLabel}`, 14, 41);
-    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, 14, 46);
+    try {
+      const doc = new jsPDF();
+      const periodeLabel = getPeriodeLabel();
 
-    // === TABEL 1: RINGKASAN ===
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('A. Ringkasan', 14, 55);
+      // Header
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('LAPORAN LALU LINTAS PERANGKAT ELEKTRONIK', 105, 18, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Unit Pengamanan Pintu Utama (P2U)', 105, 24, { align: 'center' });
 
-    const summaryRows = [];
-    summaryRows.push(['Pejabat', 'HP (Terdaftar)', String(data.pejabat.masuk), String(data.pejabat.keluar), String(data.pejabat.selisih)]);
-    if (data.tamu && data.tamu.length > 0) {
-      data.tamu.forEach(t => {
-        summaryRows.push(['Tamu', t.jenis_perangkat, String(t.masuk), String(t.keluar), String(t.selisih)]);
+      doc.setFontSize(9);
+      doc.text('Periode: ' + periode.charAt(0).toUpperCase() + periode.slice(1), 14, 36);
+      doc.text('Tanggal: ' + periodeLabel, 14, 41);
+      doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 46);
+
+      // === TABEL A: DETAIL AKTIVITAS ===
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A. Detail Aktivitas', 14, 55);
+
+      const detailRows = (data.detail_records || []).map(function(r, i) {
+        return [
+          String(i + 1),
+          r.kategori,
+          r.nama,
+          r.perangkat,
+          r.status === 'masuk' ? 'MASUK' : 'KELUAR',
+          formatTime(r.waktu)
+        ];
       });
-    }
-    summaryRows.push(['TOTAL', '', String(data.grand_total.masuk), String(data.grand_total.keluar), String(data.grand_total.selisih)]);
 
-    doc.autoTable({
-      startY: 59,
-      head: [['Kategori', 'Jenis Perangkat', 'Masuk', 'Keluar', 'Selisih']],
-      body: summaryRows,
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
-      styles: { fontSize: 8, cellPadding: 3 },
-      columnStyles: { 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
-      didParseCell: function(cellData) {
-        if (cellData.row.index === summaryRows.length - 1 && cellData.section === 'body') {
-          cellData.cell.styles.fontStyle = 'bold';
-          cellData.cell.styles.fillColor = [243, 244, 246];
-        }
+      if (detailRows.length === 0) {
+        detailRows.push(['-', '-', 'Tidak ada data', '-', '-', '-']);
       }
-    });
 
-    // === TABEL 2: DETAIL ===
-    let detailY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('B. Detail Aktivitas', 14, detailY);
+      autoTable(doc, {
+        startY: 59,
+        head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
+        body: detailRows,
+        theme: 'grid',
+        headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
+        styles: { fontSize: 7, cellPadding: 2.5 },
+        columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 4: { halign: 'center' }, 5: { halign: 'center' } },
+      });
 
-    const detailRows = (data.detail_records || []).map((r, i) => [
-      String(i + 1),
-      r.kategori,
-      r.nama,
-      r.perangkat,
-      r.status === 'masuk' ? 'MASUK' : 'KELUAR',
-      formatTime(r.waktu)
-    ]);
+      // === TABEL B: RINGKASAN ===
+      var summaryY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('B. Ringkasan', 14, summaryY);
 
-    if (detailRows.length === 0) {
-      detailRows.push(['-', '-', 'Tidak ada data', '-', '-', '-']);
+      const summaryRows = [];
+      summaryRows.push(['Pejabat', 'HP (Terdaftar)', String(data.pejabat.masuk), String(data.pejabat.keluar), String(data.pejabat.selisih)]);
+      if (data.tamu && data.tamu.length > 0) {
+        data.tamu.forEach(function(t) {
+          summaryRows.push(['Tamu', t.jenis_perangkat, String(t.masuk), String(t.keluar), String(t.selisih)]);
+        });
+      }
+      summaryRows.push(['TOTAL', '', String(data.grand_total.masuk), String(data.grand_total.keluar), String(data.grand_total.selisih)]);
+
+      autoTable(doc, {
+        startY: summaryY + 4,
+        head: [['Kategori', 'Jenis Perangkat', 'Masuk', 'Keluar', 'Selisih']],
+        body: summaryRows,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: { 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
+        didParseCell: function(cellData) {
+          if (cellData.row.index === summaryRows.length - 1 && cellData.section === 'body') {
+            cellData.cell.styles.fontStyle = 'bold';
+            cellData.cell.styles.fillColor = [243, 244, 246];
+          }
+        }
+      });
+
+      // Verification
+      var verifyY = doc.lastAutoTable.finalY + 8;
+      var selisih = data.grand_total.selisih;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      if (selisih === 0) {
+        doc.setTextColor(22, 163, 74);
+        doc.text('VERIFIKASI: Jumlah perangkat masuk dan keluar SEIMBANG.', 14, verifyY);
+      } else {
+        doc.setTextColor(220, 38, 38);
+        doc.text('PERHATIAN: Terdapat selisih ' + Math.abs(selisih) + ' perangkat yang belum seimbang.', 14, verifyY);
+      }
+
+      doc.setTextColor(150);
+      doc.setFontSize(7);
+      doc.text('Dokumen ini digenerate otomatis oleh sistem P2U Scanner Gate.', 105, 285, { align: 'center' });
+
+      doc.save('Laporan_' + periode + '_' + tanggal + '.pdf');
+    } catch (err) {
+      console.error('PDF Export Error:', err);
+      alert('Gagal mengexport PDF: ' + err.message);
     }
-
-    doc.autoTable({
-      startY: detailY + 4,
-      head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
-      body: detailRows,
-      theme: 'grid',
-      headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
-      styles: { fontSize: 7, cellPadding: 2.5 },
-      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 4: { halign: 'center' }, 5: { halign: 'center' } },
-    });
-
-    // Verification
-    const finalY = doc.lastAutoTable.finalY + 8;
-    const selisih = data.grand_total.selisih;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    if (selisih === 0) {
-      doc.setTextColor(22, 163, 74);
-      doc.text('VERIFIKASI: Jumlah perangkat masuk dan keluar SEIMBANG.', 14, finalY);
-    } else {
-      doc.setTextColor(220, 38, 38);
-      doc.text('PERHATIAN: Terdapat selisih ' + Math.abs(selisih) + ' perangkat yang belum seimbang.', 14, finalY);
-    }
-
-    doc.setTextColor(150);
-    doc.setFontSize(7);
-    doc.text('Dokumen ini digenerate otomatis oleh sistem P2U Scanner Gate.', 105, 285, { align: 'center' });
-
-    doc.save('Laporan_' + periode + '_' + tanggal + '.pdf');
   };
 
   const SelisihBadge = ({ value }) => {
@@ -143,7 +148,7 @@ const Laporan = () => {
     );
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
-        <AlertTriangle size={12} /> {value > 0 ? `+${value}` : value}
+        <AlertTriangle size={12} /> {value > 0 ? '+' + value : value}
       </span>
     );
   };
@@ -181,8 +186,8 @@ const Laporan = () => {
             <input type={periode === 'tahunan' ? 'number' : periode === 'bulanan' ? 'month' : 'date'}
               value={periode === 'tahunan' ? new Date(tanggal).getFullYear() : periode === 'bulanan' ? tanggal.substring(0, 7) : tanggal}
               onChange={(e) => {
-                if (periode === 'tahunan') setTanggal(`${e.target.value}-01-01`);
-                else if (periode === 'bulanan') setTanggal(`${e.target.value}-01`);
+                if (periode === 'tahunan') setTanggal(e.target.value + '-01-01');
+                else if (periode === 'bulanan') setTanggal(e.target.value + '-01');
                 else setTanggal(e.target.value);
               }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
@@ -200,9 +205,55 @@ const Laporan = () => {
               Periode: <span className="text-gray-800 font-bold">{getPeriodeLabel()}</span>
             </div>
 
-            {/* Summary Table */}
+            {/* Table A: Detail */}
             <div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">A. Ringkasan</h3>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">A. Detail Aktivitas</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-indigo-50 text-indigo-800 text-xs uppercase tracking-wider">
+                      <th className="py-3 px-3 font-bold rounded-tl-xl w-10">No</th>
+                      <th className="py-3 px-3 font-bold">Kategori</th>
+                      <th className="py-3 px-3 font-bold">Nama</th>
+                      <th className="py-3 px-3 font-bold">Perangkat</th>
+                      <th className="py-3 px-3 font-bold text-center">Status</th>
+                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Jam</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.detail_records && data.detail_records.length > 0 ? data.detail_records.map((r, i) => (
+                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
+                        <td className="py-3 px-3">
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                            r.kategori === 'Pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                          }`}>{r.kategori}</span>
+                        </td>
+                        <td className="py-3 px-3 font-medium text-gray-800 text-xs">{r.nama}</td>
+                        <td className="py-3 px-3 text-gray-600 text-xs">{r.perangkat}</td>
+                        <td className="py-3 px-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                            r.status === 'masuk' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {r.status === 'masuk' ? <LogIn size={12} /> : <LogOut size={12} />}
+                            {r.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
+                          {r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan="6" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Table B: Summary */}
+            <div>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">B. Ringkasan</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
@@ -245,52 +296,6 @@ const Laporan = () => {
                       <td className="py-4 px-4 text-center text-green-700 text-lg">{data.grand_total.keluar}</td>
                       <td className="py-4 px-4 text-center rounded-br-xl"><SelisihBadge value={data.grand_total.selisih} /></td>
                     </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Detail Table */}
-            <div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">B. Detail Aktivitas</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-indigo-50 text-indigo-800 text-xs uppercase tracking-wider">
-                      <th className="py-3 px-3 font-bold rounded-tl-xl w-10">No</th>
-                      <th className="py-3 px-3 font-bold">Kategori</th>
-                      <th className="py-3 px-3 font-bold">Nama</th>
-                      <th className="py-3 px-3 font-bold">Perangkat</th>
-                      <th className="py-3 px-3 font-bold text-center">Status</th>
-                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Jam</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.detail_records && data.detail_records.length > 0 ? data.detail_records.map((r, i) => (
-                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
-                        <td className="py-3 px-3">
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                            r.kategori === 'Pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                          }`}>{r.kategori}</span>
-                        </td>
-                        <td className="py-3 px-3 font-medium text-gray-800 text-xs">{r.nama}</td>
-                        <td className="py-3 px-3 text-gray-600 text-xs">{r.perangkat}</td>
-                        <td className="py-3 px-3 text-center">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
-                            r.status === 'masuk' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                          }`}>
-                            {r.status === 'masuk' ? <LogIn size={12} /> : <LogOut size={12} />}
-                            {r.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
-                          {r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                        </td>
-                      </tr>
-                    )) : (
-                      <tr><td colSpan="6" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini.</td></tr>
-                    )}
                   </tbody>
                 </table>
               </div>
