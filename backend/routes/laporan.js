@@ -3,11 +3,9 @@ const router = express.Router();
 const LogAktivitas = require('../models/LogAktivitas');
 const Tamu = require('../models/Tamu');
 
-// Helper to get date range based on period
 function getDateRange(periode, tanggal) {
     const date = new Date(tanggal);
     let start, end;
-
     if (periode === 'harian') {
         start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
@@ -18,7 +16,6 @@ function getDateRange(periode, tanggal) {
         start = new Date(date.getFullYear(), 0, 1);
         end = new Date(date.getFullYear() + 1, 0, 1);
     }
-
     return { start, end };
 }
 
@@ -27,70 +24,80 @@ router.get('/', async (req, res) => {
         const { periode = 'harian', tanggal = new Date().toISOString() } = req.query;
         const { start, end } = getDateRange(periode, tanggal);
 
-        // === PEJABAT (from LogAktivitas) ===
-        const pejabatMasuk = await LogAktivitas.countDocuments({
-            status: 'masuk',
+        // === PEJABAT detail records ===
+        const pejabatLogs = await LogAktivitas.find({
             waktu: { $gte: start, $lt: end }
+        }).sort({ waktu: 1 }).populate('pejabat_id', 'nama merk_hp tipe_hp custom_id');
+
+        const pejabatRecords = pejabatLogs.map(log => ({
+            kategori: 'Pejabat',
+            nama: log.pejabat_id ? log.pejabat_id.nama : 'Dihapus',
+            perangkat: log.pejabat_id ? `${log.pejabat_id.merk_hp || ''} ${log.pejabat_id.tipe_hp || ''}`.trim() : '-',
+            jenis: 'HP',
+            status: log.status,
+            waktu: log.waktu
+        }));
+
+        const pejabatMasuk = pejabatRecords.filter(r => r.status === 'masuk').length;
+        const pejabatKeluar = pejabatRecords.filter(r => r.status === 'keluar').length;
+
+        // === TAMU detail records ===
+        const tamuMasukList = await Tamu.find({
+            waktu_masuk: { $gte: start, $lt: end }
+        }).sort({ waktu_masuk: 1 });
+
+        const tamuKeluarList = await Tamu.find({
+            waktu_keluar: { $gte: start, $lt: end }
+        }).sort({ waktu_keluar: 1 });
+
+        const tamuRecords = [];
+        tamuMasukList.forEach(t => {
+            tamuRecords.push({
+                kategori: 'Tamu',
+                nama: `${t.nama_tamu} (${t.asal_instansi})`,
+                perangkat: `${t.jenis_perangkat} - ${t.merk}`,
+                jenis: t.jenis_perangkat,
+                status: 'masuk',
+                waktu: t.waktu_masuk
+            });
         });
-        const pejabatKeluar = await LogAktivitas.countDocuments({
-            status: 'keluar',
-            waktu: { $gte: start, $lt: end }
+        tamuKeluarList.forEach(t => {
+            tamuRecords.push({
+                kategori: 'Tamu',
+                nama: `${t.nama_tamu} (${t.asal_instansi})`,
+                perangkat: `${t.jenis_perangkat} - ${t.merk}`,
+                jenis: t.jenis_perangkat,
+                status: 'keluar',
+                waktu: t.waktu_keluar
+            });
         });
 
-        // === TAMU (from Tamu collection, grouped by jenis_perangkat) ===
-        const tamuMasuk = await Tamu.aggregate([
-            { $match: { waktu_masuk: { $gte: start, $lt: end } } },
-            { $group: { _id: '$jenis_perangkat', count: { $sum: 1 } } }
-        ]);
+        const totalTamuMasuk = tamuMasukList.length;
+        const totalTamuKeluar = tamuKeluarList.length;
 
-        const tamuKeluar = await Tamu.aggregate([
-            { $match: { waktu_keluar: { $gte: start, $lt: end } } },
-            { $group: { _id: '$jenis_perangkat', count: { $sum: 1 } } }
-        ]);
-
-        // Build tamu summary per device type
+        // Tamu summary by device type
         const jenisPerangkatList = ['HP', 'Laptop', 'Tablet', 'Flashdisk', 'Hardisk', 'Lainnya'];
         const tamuSummary = jenisPerangkatList.map(jenis => {
-            const masukItem = tamuMasuk.find(m => m._id === jenis);
-            const keluarItem = tamuKeluar.find(k => k._id === jenis);
-            const masuk = masukItem ? masukItem.count : 0;
-            const keluar = keluarItem ? keluarItem.count : 0;
-            return {
-                jenis_perangkat: jenis,
-                masuk,
-                keluar,
-                selisih: masuk - keluar
-            };
-        }).filter(item => item.masuk > 0 || item.keluar > 0); // Only include types with data
+            const masuk = tamuMasukList.filter(t => t.jenis_perangkat === jenis).length;
+            const keluar = tamuKeluarList.filter(t => t.jenis_perangkat === jenis).length;
+            return { jenis_perangkat: jenis, masuk, keluar, selisih: masuk - keluar };
+        }).filter(item => item.masuk > 0 || item.keluar > 0);
 
-        // Total tamu
-        const totalTamuMasuk = tamuSummary.reduce((sum, t) => sum + t.masuk, 0);
-        const totalTamuKeluar = tamuSummary.reduce((sum, t) => sum + t.keluar, 0);
-
-        // Grand totals
         const grandMasuk = pejabatMasuk + totalTamuMasuk;
         const grandKeluar = pejabatKeluar + totalTamuKeluar;
+
+        // Merge all detail records sorted by time
+        const allRecords = [...pejabatRecords, ...tamuRecords].sort((a, b) => new Date(a.waktu) - new Date(b.waktu));
 
         res.json({
             periode,
             tanggal_awal: start,
             tanggal_akhir: end,
-            pejabat: {
-                masuk: pejabatMasuk,
-                keluar: pejabatKeluar,
-                selisih: pejabatMasuk - pejabatKeluar
-            },
+            pejabat: { masuk: pejabatMasuk, keluar: pejabatKeluar, selisih: pejabatMasuk - pejabatKeluar },
             tamu: tamuSummary,
-            total_tamu: {
-                masuk: totalTamuMasuk,
-                keluar: totalTamuKeluar,
-                selisih: totalTamuMasuk - totalTamuKeluar
-            },
-            grand_total: {
-                masuk: grandMasuk,
-                keluar: grandKeluar,
-                selisih: grandMasuk - grandKeluar
-            }
+            total_tamu: { masuk: totalTamuMasuk, keluar: totalTamuKeluar, selisih: totalTamuMasuk - totalTamuKeluar },
+            grand_total: { masuk: grandMasuk, keluar: grandKeluar, selisih: grandMasuk - grandKeluar },
+            detail_records: allRecords
         });
     } catch (err) {
         res.status(500).json({ message: err.message });

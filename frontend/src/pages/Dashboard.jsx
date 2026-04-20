@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Users, Smartphone, LogIn, LogOut, Activity } from 'lucide-react';
+import { Users, Smartphone, LogIn, LogOut, Activity, UserCheck } from 'lucide-react';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -8,6 +8,8 @@ const Dashboard = () => {
     total_hp: 0,
     jumlah_dalam: 0,
     jumlah_luar: 0,
+    total_tamu: 0,
+    tamu_dalam: 0,
     recent_activities: []
   });
   const [loading, setLoading] = useState(true);
@@ -60,89 +62,57 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard 
-              title="Total Pejabat" 
-              value={stats.total_pejabat} 
-              icon={Users} 
-              colorClass="bg-blue-50 text-blue-600" 
-              gradientClass="bg-blue-600"
-            />
-            <StatCard 
-              title="Total HP Terdaftar" 
-              value={stats.total_hp} 
-              icon={Smartphone} 
-              colorClass="bg-purple-50 text-purple-600" 
-              gradientClass="bg-purple-600"
-            />
-            <StatCard 
-              title="HP Di Dalam Lapas" 
-              value={stats.jumlah_dalam} 
-              icon={LogIn} 
-              colorClass="bg-orange-50 text-orange-600" 
-              gradientClass="bg-orange-600"
-            />
-            <StatCard 
-              title="HP Di Luar Lapas" 
-              value={stats.jumlah_luar} 
-              icon={LogOut} 
-              colorClass="bg-green-50 text-green-600" 
-              gradientClass="bg-green-600"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StatCard title="Total Pejabat" value={stats.total_pejabat} icon={Users} colorClass="bg-blue-50 text-blue-600" gradientClass="bg-blue-600" />
+            <StatCard title="HP Pejabat Di Dalam" value={stats.jumlah_dalam} icon={LogIn} colorClass="bg-orange-50 text-orange-600" gradientClass="bg-orange-600" />
+            <StatCard title="Perangkat Tamu Di Dalam" value={stats.tamu_dalam || 0} icon={UserCheck} colorClass="bg-purple-50 text-purple-600" gradientClass="bg-purple-600" />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                <Activity size={20} />
-              </div>
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Activity size={20} /></div>
               <h2 className="text-lg font-bold text-gray-800">Aktivitas Terakhir</h2>
             </div>
-            
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 text-sm text-gray-400">
-                    <th className="py-3 px-4 font-semibold">Nama Pejabat</th>
-                    <th className="py-3 px-4 font-semibold">HP / Device</th>
-                    <th className="py-3 px-4 font-semibold">Status Aktivitas</th>
-                    <th className="py-3 px-4 font-semibold text-right">Waktu Record</th>
+                    <th className="py-3 px-4 font-semibold">Tipe</th>
+                    <th className="py-3 px-4 font-semibold">Nama</th>
+                    <th className="py-3 px-4 font-semibold">Perangkat</th>
+                    <th className="py-3 px-4 font-semibold">Status</th>
+                    <th className="py-3 px-4 font-semibold text-right">Waktu</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.recent_activities.length > 0 ? (
                     stats.recent_activities.map((log) => (
                       <tr key={log._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-800">{log.pejabat_id ? log.pejabat_id.nama : 'Unknown'}</td>
                         <td className="py-4 px-4">
-                          {log.pejabat_id ? (
-                            <span className="text-xs font-semibold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg">
-                              {log.pejabat_id.merk_hp || 'N/A'} {log.pejabat_id.tipe_hp || ''}
-                            </span>
-                          ) : 'N/A'}
+                          <span className={`px-2 py-1 rounded-md text-xs font-bold ${log.tipe === 'pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                            {log.tipe === 'pejabat' ? 'PEJABAT' : 'TAMU'}
+                          </span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                            log.status === 'masuk' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                          }`}>
+                          <p className="font-medium text-gray-800">{log.nama}</p>
+                          <p className="text-xs text-gray-400 font-mono mt-0.5">{log.custom_id}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-xs font-semibold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg">{log.perangkat || '-'}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${log.status === 'masuk' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
                             {log.status === 'masuk' ? <LogIn size={14} /> : <LogOut size={14} />}
                             {log.status.toUpperCase()}
                           </span>
                         </td>
                         <td className="py-4 px-4 text-sm text-gray-500 text-right">
-                          {new Date(log.waktu).toLocaleString('id-ID', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short'
-                          })}
+                          {new Date(log.waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                         </td>
                       </tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-400 text-sm">
-                        Belum ada aktivitas terekam.
-                      </td>
-                    </tr>
+                    <tr><td colSpan="5" className="py-8 text-center text-gray-400 text-sm">Belum ada aktivitas terekam.</td></tr>
                   )}
                 </tbody>
               </table>

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import api from '../lib/api';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3 } from 'lucide-react';
+import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3, LogIn, LogOut } from 'lucide-react';
 
 const Laporan = () => {
   const [periode, setPeriode] = useState('harian');
@@ -30,90 +28,111 @@ const Laporan = () => {
     return d.getFullYear().toString();
   };
 
-  const exportPDF = () => {
+  const formatTime = (waktu) => {
+    if (!waktu) return '-';
+    return new Date(waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const exportPDF = async () => {
     if (!data) return;
+    
+    // Dynamic import to avoid SSR issues
+    const { jsPDF } = await import('jspdf');
+    const autoTableModule = await import('jspdf-autotable');
+    
     const doc = new jsPDF();
     const periodeLabel = getPeriodeLabel();
 
     // Header
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('LAPORAN LALU LINTAS PERANGKAT ELEKTRONIK', 105, 20, { align: 'center' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Unit Pengamanan Pintu Utama (P2U)', 105, 27, { align: 'center' });
-    
+    doc.text('LAPORAN LALU LINTAS PERANGKAT ELEKTRONIK', 105, 18, { align: 'center' });
     doc.setFontSize(10);
-    doc.text(`Periode: ${periode.charAt(0).toUpperCase() + periode.slice(1)}`, 14, 40);
-    doc.text(`Tanggal: ${periodeLabel}`, 14, 46);
-    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, 14, 52);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Unit Pengamanan Pintu Utama (P2U)', 105, 24, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.text(`Periode: ${periode.charAt(0).toUpperCase() + periode.slice(1)}`, 14, 36);
+    doc.text(`Tanggal: ${periodeLabel}`, 14, 41);
+    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, 14, 46);
 
-    // Build table data
-    const tableRows = [];
+    // === TABEL 1: RINGKASAN ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('A. Ringkasan', 14, 55);
 
-    // Pejabat row
-    tableRows.push(['Pejabat', 'HP (Terdaftar)', data.pejabat.masuk, data.pejabat.keluar, data.pejabat.selisih]);
-
-    // Tamu rows
-    if (data.tamu.length > 0) {
+    const summaryRows = [];
+    summaryRows.push(['Pejabat', 'HP (Terdaftar)', String(data.pejabat.masuk), String(data.pejabat.keluar), String(data.pejabat.selisih)]);
+    if (data.tamu && data.tamu.length > 0) {
       data.tamu.forEach(t => {
-        tableRows.push(['Tamu', t.jenis_perangkat, t.masuk, t.keluar, t.selisih]);
+        summaryRows.push(['Tamu', t.jenis_perangkat, String(t.masuk), String(t.keluar), String(t.selisih)]);
       });
-    } else {
-      tableRows.push(['Tamu', '-', 0, 0, 0]);
     }
-
-    // Total row
-    tableRows.push(['TOTAL', '', data.grand_total.masuk, data.grand_total.keluar, data.grand_total.selisih]);
+    summaryRows.push(['TOTAL', '', String(data.grand_total.masuk), String(data.grand_total.keluar), String(data.grand_total.selisih)]);
 
     doc.autoTable({
-      startY: 58,
+      startY: 59,
       head: [['Kategori', 'Jenis Perangkat', 'Masuk', 'Keluar', 'Selisih']],
-      body: tableRows,
+      body: summaryRows,
       theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246], fontSize: 10, fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 4 },
-      columnStyles: {
-        2: { halign: 'center' },
-        3: { halign: 'center' },
-        4: { halign: 'center' },
-      },
-      didParseCell: function(data) {
-        // Style the TOTAL row
-        if (data.row.index === tableRows.length - 1) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.fillColor = [243, 244, 246];
-        }
-        // Color selisih column
-        if (data.column.index === 4 && data.section === 'body') {
-          const val = data.cell.raw;
-          if (val !== 0) {
-            data.cell.styles.textColor = [220, 38, 38]; // red
-          } else {
-            data.cell.styles.textColor = [22, 163, 74]; // green
-          }
+      headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 3 },
+      columnStyles: { 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
+      didParseCell: function(cellData) {
+        if (cellData.row.index === summaryRows.length - 1 && cellData.section === 'body') {
+          cellData.cell.styles.fontStyle = 'bold';
+          cellData.cell.styles.fillColor = [243, 244, 246];
         }
       }
     });
 
-    // Verification note
-    const finalY = doc.lastAutoTable.finalY + 10;
-    const selisih = data.grand_total.selisih;
-    doc.setFontSize(10);
-    if (selisih === 0) {
-      doc.setTextColor(22, 163, 74);
-      doc.text('✓ VERIFIKASI: Jumlah perangkat masuk dan keluar SEIMBANG.', 14, finalY);
-    } else {
-      doc.setTextColor(220, 38, 38);
-      doc.text(`⚠ PERHATIAN: Terdapat selisih ${Math.abs(selisih)} perangkat yang belum seimbang.`, 14, finalY);
+    // === TABEL 2: DETAIL ===
+    let detailY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('B. Detail Aktivitas', 14, detailY);
+
+    const detailRows = (data.detail_records || []).map((r, i) => [
+      String(i + 1),
+      r.kategori,
+      r.nama,
+      r.perangkat,
+      r.status === 'masuk' ? 'MASUK' : 'KELUAR',
+      formatTime(r.waktu)
+    ]);
+
+    if (detailRows.length === 0) {
+      detailRows.push(['-', '-', 'Tidak ada data', '-', '-', '-']);
     }
 
-    // Footer
+    doc.autoTable({
+      startY: detailY + 4,
+      head: [['No', 'Kategori', 'Nama', 'Perangkat', 'Status', 'Jam']],
+      body: detailRows,
+      theme: 'grid',
+      headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
+      styles: { fontSize: 7, cellPadding: 2.5 },
+      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 4: { halign: 'center' }, 5: { halign: 'center' } },
+    });
+
+    // Verification
+    const finalY = doc.lastAutoTable.finalY + 8;
+    const selisih = data.grand_total.selisih;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (selisih === 0) {
+      doc.setTextColor(22, 163, 74);
+      doc.text('VERIFIKASI: Jumlah perangkat masuk dan keluar SEIMBANG.', 14, finalY);
+    } else {
+      doc.setTextColor(220, 38, 38);
+      doc.text('PERHATIAN: Terdapat selisih ' + Math.abs(selisih) + ' perangkat yang belum seimbang.', 14, finalY);
+    }
+
     doc.setTextColor(150);
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.text('Dokumen ini digenerate otomatis oleh sistem P2U Scanner Gate.', 105, 285, { align: 'center' });
 
-    doc.save(`Laporan_${periode}_${tanggal}.pdf`);
+    doc.save('Laporan_' + periode + '_' + tanggal + '.pdf');
   };
 
   const SelisihBadge = ({ value }) => {
@@ -176,74 +195,117 @@ const Laporan = () => {
 
         {/* Results */}
         {data && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-sm text-gray-500 font-medium">
               Periode: <span className="text-gray-800 font-bold">{getPeriodeLabel()}</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="bg-blue-50 text-blue-800 text-xs uppercase tracking-wider">
-                    <th className="py-3 px-4 font-bold rounded-tl-xl">Kategori</th>
-                    <th className="py-3 px-4 font-bold">Jenis Perangkat</th>
-                    <th className="py-3 px-4 font-bold text-center">Masuk</th>
-                    <th className="py-3 px-4 font-bold text-center">Keluar</th>
-                    <th className="py-3 px-4 font-bold text-center rounded-tr-xl">Selisih</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Pejabat row */}
-                  <tr className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-semibold text-gray-800">Pejabat</td>
-                    <td className="py-3 px-4 text-gray-600">HP (Terdaftar)</td>
-                    <td className="py-3 px-4 text-center font-bold text-orange-600">{data.pejabat.masuk}</td>
-                    <td className="py-3 px-4 text-center font-bold text-green-600">{data.pejabat.keluar}</td>
-                    <td className="py-3 px-4 text-center"><SelisihBadge value={data.pejabat.selisih} /></td>
-                  </tr>
-
-                  {/* Tamu rows */}
-                  {data.tamu.length > 0 ? data.tamu.map((t, i) => (
-                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-gray-600">{i === 0 ? 'Tamu' : ''}</td>
-                      <td className="py-3 px-4 text-gray-600">{t.jenis_perangkat}</td>
-                      <td className="py-3 px-4 text-center font-bold text-orange-600">{t.masuk}</td>
-                      <td className="py-3 px-4 text-center font-bold text-green-600">{t.keluar}</td>
-                      <td className="py-3 px-4 text-center"><SelisihBadge value={t.selisih} /></td>
+            {/* Summary Table */}
+            <div>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">A. Ringkasan</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-blue-50 text-blue-800 text-xs uppercase tracking-wider">
+                      <th className="py-3 px-4 font-bold rounded-tl-xl">Kategori</th>
+                      <th className="py-3 px-4 font-bold">Jenis Perangkat</th>
+                      <th className="py-3 px-4 font-bold text-center">Masuk</th>
+                      <th className="py-3 px-4 font-bold text-center">Keluar</th>
+                      <th className="py-3 px-4 font-bold text-center rounded-tr-xl">Selisih</th>
                     </tr>
-                  )) : (
-                    <tr className="border-b border-gray-50">
-                      <td className="py-3 px-4 text-gray-400">Tamu</td>
-                      <td className="py-3 px-4 text-gray-400">-</td>
-                      <td className="py-3 px-4 text-center text-gray-400">0</td>
-                      <td className="py-3 px-4 text-center text-gray-400">0</td>
-                      <td className="py-3 px-4 text-center"><SelisihBadge value={0} /></td>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 font-semibold text-gray-800">Pejabat</td>
+                      <td className="py-3 px-4 text-gray-600">HP (Terdaftar)</td>
+                      <td className="py-3 px-4 text-center font-bold text-orange-600">{data.pejabat.masuk}</td>
+                      <td className="py-3 px-4 text-center font-bold text-green-600">{data.pejabat.keluar}</td>
+                      <td className="py-3 px-4 text-center"><SelisihBadge value={data.pejabat.selisih} /></td>
                     </tr>
-                  )}
-
-                  {/* Grand Total */}
-                  <tr className="bg-gray-50 font-bold text-gray-900">
-                    <td className="py-4 px-4 rounded-bl-xl" colSpan={2}>GRAND TOTAL</td>
-                    <td className="py-4 px-4 text-center text-orange-700 text-lg">{data.grand_total.masuk}</td>
-                    <td className="py-4 px-4 text-center text-green-700 text-lg">{data.grand_total.keluar}</td>
-                    <td className="py-4 px-4 text-center rounded-br-xl"><SelisihBadge value={data.grand_total.selisih} /></td>
-                  </tr>
-                </tbody>
-              </table>
+                    {data.tamu && data.tamu.length > 0 ? data.tamu.map((t, i) => (
+                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-gray-600">{i === 0 ? 'Tamu' : ''}</td>
+                        <td className="py-3 px-4 text-gray-600">{t.jenis_perangkat}</td>
+                        <td className="py-3 px-4 text-center font-bold text-orange-600">{t.masuk}</td>
+                        <td className="py-3 px-4 text-center font-bold text-green-600">{t.keluar}</td>
+                        <td className="py-3 px-4 text-center"><SelisihBadge value={t.selisih} /></td>
+                      </tr>
+                    )) : (
+                      <tr className="border-b border-gray-50">
+                        <td className="py-3 px-4 text-gray-400">Tamu</td>
+                        <td className="py-3 px-4 text-gray-400">-</td>
+                        <td className="py-3 px-4 text-center text-gray-400">0</td>
+                        <td className="py-3 px-4 text-center text-gray-400">0</td>
+                        <td className="py-3 px-4 text-center"><SelisihBadge value={0} /></td>
+                      </tr>
+                    )}
+                    <tr className="bg-gray-50 font-bold text-gray-900">
+                      <td className="py-4 px-4 rounded-bl-xl" colSpan={2}>GRAND TOTAL</td>
+                      <td className="py-4 px-4 text-center text-orange-700 text-lg">{data.grand_total.masuk}</td>
+                      <td className="py-4 px-4 text-center text-green-700 text-lg">{data.grand_total.keluar}</td>
+                      <td className="py-4 px-4 text-center rounded-br-xl"><SelisihBadge value={data.grand_total.selisih} /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Verification Status */}
+            {/* Detail Table */}
+            <div>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">B. Detail Aktivitas</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-indigo-50 text-indigo-800 text-xs uppercase tracking-wider">
+                      <th className="py-3 px-3 font-bold rounded-tl-xl w-10">No</th>
+                      <th className="py-3 px-3 font-bold">Kategori</th>
+                      <th className="py-3 px-3 font-bold">Nama</th>
+                      <th className="py-3 px-3 font-bold">Perangkat</th>
+                      <th className="py-3 px-3 font-bold text-center">Status</th>
+                      <th className="py-3 px-3 font-bold text-center rounded-tr-xl">Jam</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.detail_records && data.detail_records.length > 0 ? data.detail_records.map((r, i) => (
+                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td className="py-3 px-3 text-gray-400 text-center text-xs">{i + 1}</td>
+                        <td className="py-3 px-3">
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                            r.kategori === 'Pejabat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                          }`}>{r.kategori}</span>
+                        </td>
+                        <td className="py-3 px-3 font-medium text-gray-800 text-xs">{r.nama}</td>
+                        <td className="py-3 px-3 text-gray-600 text-xs">{r.perangkat}</td>
+                        <td className="py-3 px-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                            r.status === 'masuk' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {r.status === 'masuk' ? <LogIn size={12} /> : <LogOut size={12} />}
+                            {r.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center text-gray-600 font-mono text-xs">
+                          {r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan="6" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Verification */}
             <div className={`p-4 rounded-xl flex items-center gap-3 ${
-              data.grand_total.selisih === 0 
-                ? 'bg-green-50 border border-green-200' 
-                : 'bg-red-50 border border-red-200'
+              data.grand_total.selisih === 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
             }`}>
               {data.grand_total.selisih === 0 ? (
                 <>
                   <CheckCircle className="text-green-600 shrink-0" size={24} />
                   <div>
                     <p className="font-bold text-green-800">Verifikasi: SEIMBANG</p>
-                    <p className="text-green-600 text-sm">Jumlah perangkat masuk dan keluar sesuai. Tidak ada selisih.</p>
+                    <p className="text-green-600 text-sm">Jumlah perangkat masuk dan keluar sesuai.</p>
                   </div>
                 </>
               ) : (
@@ -251,7 +313,7 @@ const Laporan = () => {
                   <AlertTriangle className="text-red-600 shrink-0" size={24} />
                   <div>
                     <p className="font-bold text-red-800">Perhatian: TIDAK SEIMBANG</p>
-                    <p className="text-red-600 text-sm">Terdapat selisih {Math.abs(data.grand_total.selisih)} perangkat yang belum seimbang. Harap verifikasi.</p>
+                    <p className="text-red-600 text-sm">Terdapat selisih {Math.abs(data.grand_total.selisih)} perangkat yang belum seimbang.</p>
                   </div>
                 </>
               )}
