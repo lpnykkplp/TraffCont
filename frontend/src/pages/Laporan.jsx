@@ -2,15 +2,30 @@ import React, { useState } from 'react';
 import api from '../lib/api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3, LogIn, LogOut } from 'lucide-react';
+import { FileText, Download, Calendar, CheckCircle, AlertTriangle, BarChart3, LogIn, LogOut, Search } from 'lucide-react';
 
 const Laporan = () => {
   const [periode, setPeriode] = useState('harian');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
   const [tanggalAkhir, setTanggalAkhir] = useState(new Date().toISOString().split('T')[0]);
   const [filterKategori, setFilterKategori] = useState('Semua');
+  const [searchQuery, setSearchQuery] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const getFilteredRecords = () => {
+    if (!data || !data.detail_records) return [];
+    return data.detail_records.filter(r => {
+      if (filterKategori !== 'Semua' && r.kategori !== filterKategori) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchNama = r.nama && r.nama.toLowerCase().includes(query);
+        const matchPerangkat = r.perangkat && r.perangkat.toLowerCase().includes(query);
+        if (!matchNama && !matchPerangkat) return false;
+      }
+      return true;
+    });
+  };
 
   const fetchLaporan = async () => {
     setLoading(true);
@@ -66,10 +81,7 @@ const Laporan = () => {
       doc.setFont('helvetica', 'bold');
       doc.text('A. Detail Aktivitas', 14, 55);
 
-      const filteredDetailRecords = (data.detail_records || []).filter(r => {
-        if (filterKategori === 'Semua') return true;
-        return r.kategori === filterKategori;
-      });
+      const filteredDetailRecords = getFilteredRecords();
 
       const detailRows = filteredDetailRecords.map(function(r, i) {
         return [
@@ -234,17 +246,31 @@ const Laporan = () => {
 
             {/* Table A: Detail */}
             <div>
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                 <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">A. Detail Aktivitas</h3>
-                <select 
-                  value={filterKategori}
-                  onChange={(e) => setFilterKategori(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 cursor-pointer shadow-sm"
-                >
-                  <option value="Semua">Semua Kategori</option>
-                  <option value="Pejabat">Hanya Pejabat</option>
-                  <option value="Tamu">Hanya Tamu</option>
-                </select>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-48">
+                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+                      <Search size={14} />
+                    </div>
+                    <input 
+                      type="text"
+                      placeholder="Cari nama/alat..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                  <select 
+                    value={filterKategori}
+                    onChange={(e) => setFilterKategori(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 cursor-pointer shadow-sm shrink-0"
+                  >
+                    <option value="Semua">Semua Kategori</option>
+                    <option value="Pejabat">Hanya Pejabat</option>
+                    <option value="Tamu">Hanya Tamu</option>
+                  </select>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
@@ -261,10 +287,7 @@ const Laporan = () => {
                   </thead>
                   <tbody>
                     {data.detail_records && (() => {
-                      const filtered = data.detail_records.filter(r => {
-                        if (filterKategori === 'Semua') return true;
-                        return r.kategori === filterKategori;
-                      });
+                      const filtered = getFilteredRecords();
                       if (filtered.length === 0) {
                         return <tr><td colSpan="7" className="py-8 text-center text-gray-400">Tidak ada data aktivitas pada periode ini untuk kategori tersebut.</td></tr>;
                       }
