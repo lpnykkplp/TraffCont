@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { LogIn, LogOut, Trash2 } from 'lucide-react';
+import { LogIn, LogOut, Trash2, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Riwayat = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
   const { user } = useAuth();
 
   const fetchHistory = async () => {
@@ -35,7 +36,7 @@ const Riwayat = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Riwayat Lalu Lintas</h1>
         <p className="text-gray-500 mt-1">Log aktivitas keluar masuk perangkat pejabat & tamu yang terekam sistem.</p>
@@ -49,6 +50,7 @@ const Riwayat = () => {
                 <th className="py-4 px-6 font-semibold">Tipe</th>
                 <th className="py-4 px-6 font-semibold">Nama</th>
                 <th className="py-4 px-6 font-semibold">Perangkat</th>
+                <th className="py-4 px-6 font-semibold text-center">Bukti Foto</th>
                 <th className="py-4 px-6 font-semibold">Status Aksi</th>
                 <th className="py-4 px-6 font-semibold text-right">Waktu Record</th>
                 {user?.role === 'Admin' && <th className="py-4 px-4 font-semibold text-center w-10">Opsi</th>}
@@ -57,7 +59,7 @@ const Riwayat = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center">
+                  <td colSpan="7" className="py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                   </td>
                 </tr>
@@ -79,6 +81,23 @@ const Riwayat = () => {
                       <span className="text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-lg text-gray-700">
                          {log.perangkat || '-'}
                       </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex justify-center">
+                        {log.foto_bukti ? (
+                          <div 
+                            className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
+                            onClick={() => setSelectedImage(log.foto_bukti)}
+                          >
+                            <img src={log.foto_bukti} alt="Bukti" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <ImageIcon size={14} className="text-white" />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] uppercase font-bold text-gray-300 italic">No Photo</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${
@@ -113,7 +132,7 @@ const Riwayat = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={user?.role === 'Admin' ? 6 : 5} className="py-12 text-center text-gray-400">
+                  <td colSpan={user?.role === 'Admin' ? 7 : 6} className="py-12 text-center text-gray-400">
                     <p>Tidak ada riwayat aktivitas ditemukan.</p>
                   </td>
                 </tr>
@@ -122,6 +141,29 @@ const Riwayat = () => {
           </table>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full flex flex-col items-center">
+            <button 
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 p-2 transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X size={32} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Bukti Foto Full" 
+              className="max-h-[85vh] w-auto rounded-2xl shadow-2xl animate-in zoom-in-95"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
