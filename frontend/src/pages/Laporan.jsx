@@ -27,6 +27,40 @@ const Laporan = () => {
     });
   };
 
+  const getFilteredSummary = () => {
+    const filtered = getFilteredRecords();
+    let pejabatMasuk = 0, pejabatKeluar = 0;
+    const tamuByJenis = {};
+
+    filtered.forEach(r => {
+      if (r.kategori === 'Pejabat') {
+        if (r.status === 'masuk') pejabatMasuk++;
+        else pejabatKeluar++;
+      } else if (r.kategori === 'Tamu') {
+        const jenis = r.jenis || 'Lainnya';
+        if (!tamuByJenis[jenis]) tamuByJenis[jenis] = { masuk: 0, keluar: 0 };
+        if (r.status === 'masuk') tamuByJenis[jenis].masuk++;
+        else tamuByJenis[jenis].keluar++;
+      }
+    });
+
+    const tamuList = Object.keys(tamuByJenis).map(jenis => ({
+      jenis_perangkat: jenis,
+      masuk: tamuByJenis[jenis].masuk,
+      keluar: tamuByJenis[jenis].keluar,
+      selisih: tamuByJenis[jenis].masuk - tamuByJenis[jenis].keluar
+    }));
+
+    const grandMasuk = pejabatMasuk + tamuList.reduce((s, t) => s + t.masuk, 0);
+    const grandKeluar = pejabatKeluar + tamuList.reduce((s, t) => s + t.keluar, 0);
+
+    return {
+      pejabat: { masuk: pejabatMasuk, keluar: pejabatKeluar, selisih: pejabatMasuk - pejabatKeluar },
+      tamu: tamuList,
+      grand_total: { masuk: grandMasuk, keluar: grandKeluar, selisih: grandMasuk - grandKeluar }
+    };
+  };
+
   const fetchLaporan = async () => {
     setLoading(true);
     try {
@@ -115,19 +149,20 @@ const Laporan = () => {
       });
 
       // === TABEL B: RINGKASAN ===
+      const summary = getFilteredSummary();
       var summaryY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.text('B. Ringkasan', 14, summaryY);
 
       const summaryRows = [];
-      summaryRows.push(['Pejabat', 'HP (Terdaftar)', String(data.pejabat.masuk), String(data.pejabat.keluar), String(data.pejabat.selisih)]);
-      if (data.tamu && data.tamu.length > 0) {
-        data.tamu.forEach(function(t) {
+      summaryRows.push(['Pejabat', 'HP (Terdaftar)', String(summary.pejabat.masuk), String(summary.pejabat.keluar), String(summary.pejabat.selisih)]);
+      if (summary.tamu && summary.tamu.length > 0) {
+        summary.tamu.forEach(function(t) {
           summaryRows.push(['Tamu', t.jenis_perangkat, String(t.masuk), String(t.keluar), String(t.selisih)]);
         });
       }
-      summaryRows.push(['TOTAL', '', String(data.grand_total.masuk), String(data.grand_total.keluar), String(data.grand_total.selisih)]);
+      summaryRows.push(['TOTAL', '', String(summary.grand_total.masuk), String(summary.grand_total.keluar), String(summary.grand_total.selisih)]);
 
       autoTable(doc, {
         startY: summaryY + 4,
@@ -147,7 +182,7 @@ const Laporan = () => {
 
       // Verification
       var verifyY = doc.lastAutoTable.finalY + 8;
-      var selisih = data.grand_total.selisih;
+      var selisih = summary.grand_total.selisih;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       if (selisih === 0) {
@@ -324,77 +359,84 @@ const Laporan = () => {
             </div>
 
             {/* Table B: Summary */}
-            <div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">B. Ringkasan</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-blue-50 text-blue-800 text-xs uppercase tracking-wider">
-                      <th className="py-3 px-4 font-bold rounded-tl-xl">Kategori</th>
-                      <th className="py-3 px-4 font-bold">Jenis Perangkat</th>
-                      <th className="py-3 px-4 font-bold text-center">Masuk</th>
-                      <th className="py-3 px-4 font-bold text-center">Keluar</th>
-                      <th className="py-3 px-4 font-bold text-center rounded-tr-xl">Selisih</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-semibold text-gray-800">Pejabat</td>
-                      <td className="py-3 px-4 text-gray-600">HP (Terdaftar)</td>
-                      <td className="py-3 px-4 text-center font-bold text-orange-600">{data.pejabat.masuk}</td>
-                      <td className="py-3 px-4 text-center font-bold text-green-600">{data.pejabat.keluar}</td>
-                      <td className="py-3 px-4 text-center"><SelisihBadge value={data.pejabat.selisih} /></td>
-                    </tr>
-                    {data.tamu && data.tamu.length > 0 ? data.tamu.map((t, i) => (
-                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-gray-600">{i === 0 ? 'Tamu' : ''}</td>
-                        <td className="py-3 px-4 text-gray-600">{t.jenis_perangkat}</td>
-                        <td className="py-3 px-4 text-center font-bold text-orange-600">{t.masuk}</td>
-                        <td className="py-3 px-4 text-center font-bold text-green-600">{t.keluar}</td>
-                        <td className="py-3 px-4 text-center"><SelisihBadge value={t.selisih} /></td>
-                      </tr>
-                    )) : (
-                      <tr className="border-b border-gray-50">
-                        <td className="py-3 px-4 text-gray-400">Tamu</td>
-                        <td className="py-3 px-4 text-gray-400">-</td>
-                        <td className="py-3 px-4 text-center text-gray-400">0</td>
-                        <td className="py-3 px-4 text-center text-gray-400">0</td>
-                        <td className="py-3 px-4 text-center"><SelisihBadge value={0} /></td>
-                      </tr>
-                    )}
-                    <tr className="bg-gray-50 font-bold text-gray-900">
-                      <td className="py-4 px-4 rounded-bl-xl" colSpan={2}>GRAND TOTAL</td>
-                      <td className="py-4 px-4 text-center text-orange-700 text-lg">{data.grand_total.masuk}</td>
-                      <td className="py-4 px-4 text-center text-green-700 text-lg">{data.grand_total.keluar}</td>
-                      <td className="py-4 px-4 text-center rounded-br-xl"><SelisihBadge value={data.grand_total.selisih} /></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {(() => {
+              const summary = getFilteredSummary();
+              return (
+                <>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">B. Ringkasan</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-blue-50 text-blue-800 text-xs uppercase tracking-wider">
+                            <th className="py-3 px-4 font-bold rounded-tl-xl">Kategori</th>
+                            <th className="py-3 px-4 font-bold">Jenis Perangkat</th>
+                            <th className="py-3 px-4 font-bold text-center">Masuk</th>
+                            <th className="py-3 px-4 font-bold text-center">Keluar</th>
+                            <th className="py-3 px-4 font-bold text-center rounded-tr-xl">Selisih</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 font-semibold text-gray-800">Pejabat</td>
+                            <td className="py-3 px-4 text-gray-600">HP (Terdaftar)</td>
+                            <td className="py-3 px-4 text-center font-bold text-orange-600">{summary.pejabat.masuk}</td>
+                            <td className="py-3 px-4 text-center font-bold text-green-600">{summary.pejabat.keluar}</td>
+                            <td className="py-3 px-4 text-center"><SelisihBadge value={summary.pejabat.selisih} /></td>
+                          </tr>
+                          {summary.tamu && summary.tamu.length > 0 ? summary.tamu.map((t, i) => (
+                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                              <td className="py-3 px-4 text-gray-600">{i === 0 ? 'Tamu' : ''}</td>
+                              <td className="py-3 px-4 text-gray-600">{t.jenis_perangkat}</td>
+                              <td className="py-3 px-4 text-center font-bold text-orange-600">{t.masuk}</td>
+                              <td className="py-3 px-4 text-center font-bold text-green-600">{t.keluar}</td>
+                              <td className="py-3 px-4 text-center"><SelisihBadge value={t.selisih} /></td>
+                            </tr>
+                          )) : (
+                            <tr className="border-b border-gray-50">
+                              <td className="py-3 px-4 text-gray-400">Tamu</td>
+                              <td className="py-3 px-4 text-gray-400">-</td>
+                              <td className="py-3 px-4 text-center text-gray-400">0</td>
+                              <td className="py-3 px-4 text-center text-gray-400">0</td>
+                              <td className="py-3 px-4 text-center"><SelisihBadge value={0} /></td>
+                            </tr>
+                          )}
+                          <tr className="bg-gray-50 font-bold text-gray-900">
+                            <td className="py-4 px-4 rounded-bl-xl" colSpan={2}>GRAND TOTAL</td>
+                            <td className="py-4 px-4 text-center text-orange-700 text-lg">{summary.grand_total.masuk}</td>
+                            <td className="py-4 px-4 text-center text-green-700 text-lg">{summary.grand_total.keluar}</td>
+                            <td className="py-4 px-4 text-center rounded-br-xl"><SelisihBadge value={summary.grand_total.selisih} /></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
 
-            {/* Verification */}
-            <div className={`p-4 rounded-xl flex items-center gap-3 ${
-              data.grand_total.selisih === 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-            }`}>
-              {data.grand_total.selisih === 0 ? (
-                <>
-                  <CheckCircle className="text-green-600 shrink-0" size={24} />
-                  <div>
-                    <p className="font-bold text-green-800">Verifikasi: SEIMBANG</p>
-                    <p className="text-green-600 text-sm">Jumlah perangkat masuk dan keluar sesuai.</p>
+                  {/* Verification */}
+                  <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                    summary.grand_total.selisih === 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                  }`}>
+                    {summary.grand_total.selisih === 0 ? (
+                      <>
+                        <CheckCircle className="text-green-600 shrink-0" size={24} />
+                        <div>
+                          <p className="font-bold text-green-800">Verifikasi: SEIMBANG</p>
+                          <p className="text-green-600 text-sm">Jumlah perangkat masuk dan keluar sesuai.</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="text-red-600 shrink-0" size={24} />
+                        <div>
+                          <p className="font-bold text-red-800">Perhatian: TIDAK SEIMBANG</p>
+                          <p className="text-red-600 text-sm">Terdapat selisih {Math.abs(summary.grand_total.selisih)} perangkat yang belum seimbang.</p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
-              ) : (
-                <>
-                  <AlertTriangle className="text-red-600 shrink-0" size={24} />
-                  <div>
-                    <p className="font-bold text-red-800">Perhatian: TIDAK SEIMBANG</p>
-                    <p className="text-red-600 text-sm">Terdapat selisih {Math.abs(data.grand_total.selisih)} perangkat yang belum seimbang.</p>
-                  </div>
-                </>
-              )}
-            </div>
+              );
+            })()}
           </div>
         )}
 
