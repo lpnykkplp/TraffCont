@@ -9,6 +9,9 @@ import DetailPejabat from './pages/DetailPejabat';
 import Riwayat from './pages/Riwayat';
 import InputTamu from './pages/InputTamu';
 import Laporan from './pages/Laporan';
+import Login from './pages/Login';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 function App() {
@@ -24,23 +27,23 @@ function App() {
 
   // Removed body zoom to fix iOS glitches
   return (
-    <>
+    <AuthProvider>
       <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout zoomLevel={zoomLevel} />}>
-          <Route index element={<Dashboard />} />
-          <Route path="register" element={<Register />} />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Layout zoomLevel={zoomLevel} /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="register" element={<Register />} />
           <Route path="scan" element={<Scan />} />
           <Route path="pejabat" element={<DaftarPejabat />} />
           <Route path="pejabat/:id" element={<DetailPejabat />} />
           <Route path="riwayat" element={<Riwayat />} />
-          <Route path="tamu" element={<InputTamu />} />
-          <Route path="laporan" element={<Laporan />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-
-    </>
+            <Route path="tamu" element={<InputTamu />} />
+            <Route path="laporan" element={<Laporan />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

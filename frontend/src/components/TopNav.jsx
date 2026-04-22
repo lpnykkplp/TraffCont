@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { LogOut as LogOutIcon } from 'lucide-react';
 
 const TopNav = () => {
   const [time, setTime] = useState(new Date());
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -29,13 +32,20 @@ const TopNav = () => {
         </div>
 
         <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-            AD
+          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md uppercase">
+            {user?.nama ? user.nama.substring(0, 2) : 'AD'}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-gray-700 leading-tight">Admin</p>
-            <p className="text-xs text-gray-500">Petugas Jaga</p>
+            <p className="text-sm font-semibold text-gray-700 leading-tight">{user?.nama || 'Admin'}</p>
+            <p className="text-xs text-gray-500">{user?.role || 'Petugas Jaga'}</p>
           </div>
+          <button 
+            onClick={logout} 
+            className="ml-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+            title="Keluar / Logout"
+          >
+            <LogOutIcon size={18} />
+          </button>
         </div>
       </div>
     </header>

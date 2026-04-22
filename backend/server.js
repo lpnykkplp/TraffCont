@@ -53,12 +53,15 @@ const scanRoutes = require('./routes/scan');
 const dashboardRoutes = require('./routes/dashboard');
 const tamuRoutes = require('./routes/tamu');
 const laporanRoutes = require('./routes/laporan');
+const authRoutes = require('./routes/auth');
+const authMiddleware = require('./middleware/auth');
 
-app.use('/api/pejabat', pejabatRoutes);
-app.use('/api/scan', scanRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/tamu', tamuRoutes);
-app.use('/api/laporan', laporanRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/pejabat', authMiddleware, pejabatRoutes);
+app.use('/api/scan', authMiddleware, scanRoutes);
+app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/tamu', authMiddleware, tamuRoutes);
+app.use('/api/laporan', authMiddleware, laporanRoutes);
 
 // Export app for Vercel serverless
 module.exports = app;
