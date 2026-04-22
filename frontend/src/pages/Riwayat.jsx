@@ -1,24 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { LogIn, LogOut } from 'lucide-react';
+import { LogIn, LogOut, Trash2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Riwayat = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const fetchHistory = async () => {
+    try {
+      const res = await api.get('/api/dashboard');
+      setLogs(res.data.recent_activities || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await api.get('/api/dashboard');
-        setLogs(res.data.recent_activities || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHistory();
   }, []);
+
+  const handleDelete = async (id, nama) => {
+    if (!window.confirm(`Yakin ingin menghapus riwayat aktivitas untuk ${nama}?`)) return;
+    try {
+      await api.delete(`/api/dashboard/riwayat/${id}`);
+      fetchHistory();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Gagal menghapus riwayat');
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -37,6 +51,7 @@ const Riwayat = () => {
                 <th className="py-4 px-6 font-semibold">Perangkat</th>
                 <th className="py-4 px-6 font-semibold">Status Aksi</th>
                 <th className="py-4 px-6 font-semibold text-right">Waktu Record</th>
+                {user?.role === 'Admin' && <th className="py-4 px-4 font-semibold text-center w-10">Opsi</th>}
               </tr>
             </thead>
             <tbody>
@@ -83,11 +98,22 @@ const Riwayat = () => {
                          {new Date(log.waktu).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
                        </p>
                     </td>
+                    {user?.role === 'Admin' && (
+                      <td className="py-4 px-4 text-center">
+                        <button 
+                          onClick={() => handleDelete(log._id, log.nama)}
+                          className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Hapus Riwayat"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-gray-400">
+                  <td colSpan={user?.role === 'Admin' ? 6 : 5} className="py-12 text-center text-gray-400">
                     <p>Tidak ada riwayat aktivitas ditemukan.</p>
                   </td>
                 </tr>

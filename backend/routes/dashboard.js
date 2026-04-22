@@ -73,4 +73,23 @@ router.get('/', async (req, res) => {
     }
 });
 
+// @route   DELETE /api/dashboard/riwayat/:id
+// @desc    Delete a specific log (Admin only)
+router.delete('/riwayat/:id', async (req, res) => {
+    try {
+        if (req.user && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Akses Ditolak: Hanya Admin yang dapat menghapus riwayat.' });
+        }
+        
+        const deletedLog = await LogAktivitas.findByIdAndDelete(req.params.id);
+        if (!deletedLog) {
+            return res.status(404).json({ message: 'Riwayat tidak ditemukan.' });
+        }
+        
+        res.json({ message: 'Riwayat berhasil dihapus.' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
