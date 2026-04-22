@@ -290,7 +290,6 @@ const DetailPejabat = () => {
           <ArrowLeft size={18} className="mr-2" />
           Kembali
         </button>
-        </button>
         <div className="flex gap-2">
           {user?.role === 'Admin' && (
             <>
