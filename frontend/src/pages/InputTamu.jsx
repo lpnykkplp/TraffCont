@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
-import { UserPlus, LogIn, LogOut, Trash2, Building2, Smartphone, Laptop, Tablet, HardDrive, Usb, Package, AlertCircle, CheckCircle, Pencil, Save, X } from 'lucide-react';
+import { UserPlus, LogIn, LogOut, Trash2, Building2, Smartphone, Laptop, Tablet, HardDrive, Usb, Package, AlertCircle, CheckCircle, Pencil, Save, X, Camera, ImagePlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const jenisIcons = {
@@ -32,6 +32,13 @@ const InputTamu = () => {
   const [editingTamu, setEditingTamu] = useState(null);
   const [editData, setEditData] = useState({});
   const [editSaving, setEditSaving] = useState(false);
+
+  // Photo capture modal state
+  const [photoModal, setPhotoModal] = useState(null); // { id, nama, action: 'masuk'|'keluar' }
+  const [fotoBukti, setFotoBukti] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchTamu = async () => {
     try {
@@ -68,22 +75,50 @@ const InputTamu = () => {
     }
   };
 
-  const handleMasuk = async (id) => {
+  const openPhotoModal = (id, nama, action) => {
+    setPhotoModal({ id, nama, action });
+    setFotoBukti(null);
+    setFotoPreview(null);
+  };
+
+  const closePhotoModal = () => {
+    setPhotoModal(null);
+    setFotoBukti(null);
+    setFotoPreview(null);
+  };
+
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoBukti(reader.result);
+      setFotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const confirmAction = async () => {
+    if (!photoModal) return;
+    setPhotoUploading(true);
     try {
-      await api.put(`/api/tamu/${id}/masuk`);
+      const payload = fotoBukti ? { foto_bukti: fotoBukti } : {};
+      await api.put(`/api/tamu/${photoModal.id}/${photoModal.action}`, payload);
+      closePhotoModal();
       fetchTamu();
     } catch (err) {
       alert(err.response?.data?.message || 'Gagal');
+    } finally {
+      setPhotoUploading(false);
     }
   };
 
-  const handleKeluar = async (id) => {
-    try {
-      await api.put(`/api/tamu/${id}/keluar`);
-      fetchTamu();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Gagal');
-    }
+  const handleMasuk = (id, nama) => {
+    openPhotoModal(id, nama || 'Tamu', 'masuk');
+  };
+
+  const handleKeluar = (id, nama) => {
+    openPhotoModal(id, nama || 'Tamu', 'keluar');
   };
 
   const handleDelete = async (id) => {
@@ -179,6 +214,60 @@ const InputTamu = () => {
                 <Save size={16} /> {editSaving ? 'Menyimpan...' : 'Simpan'}
               </button>
               <button onClick={() => setEditingTamu(null)}
+                className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-all text-sm">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Capture Modal */}
+      {photoModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4" onClick={closePhotoModal}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-lg font-bold text-gray-900">
+                {photoModal.action === 'masuk' ? '📥 Konfirmasi Masuk' : '📤 Konfirmasi Keluar'}
+              </h3>
+              <button onClick={closePhotoModal} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <p className="text-sm text-gray-600">
+              <span className="font-bold text-gray-800">{photoModal.nama}</span> akan dicatat <span className="font-bold">{photoModal.action.toUpperCase()}</span>.
+            </p>
+
+            {/* Hidden file input */}
+            <input type="file" ref={fileInputRef} accept="image/*" capture="environment" onChange={handlePhotoFileChange} className="hidden" />
+
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
+              <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><Camera size={14} /> Foto Bukti (Opsional)</p>
+              {fotoPreview ? (
+                <div className="space-y-2">
+                  <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                    <img src={fotoPreview} alt="Preview" className="w-full h-40 object-cover" />
+                    <button onClick={() => { setFotoBukti(null); setFotoPreview(null); }}
+                      className="absolute top-1.5 right-1.5 bg-black/50 text-white p-1 rounded-lg hover:bg-black/70">
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 bg-white text-gray-600 border border-dashed border-gray-300 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-all">
+                  <Camera size={16} /> Ambil Foto
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button onClick={confirmAction} disabled={photoUploading}
+                className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-xl font-medium transition-all text-sm disabled:opacity-70 ${
+                  photoModal.action === 'masuk' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'
+                }`}>
+                {photoModal.action === 'masuk' ? <LogIn size={16} /> : <LogOut size={16} />}
+                {photoUploading ? 'Memproses...' : (photoModal.action === 'masuk' ? 'Masukkan' : 'Keluarkan')}
+              </button>
+              <button onClick={closePhotoModal}
                 className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-all text-sm">
                 Batal
               </button>
@@ -283,7 +372,7 @@ const InputTamu = () => {
                     {t.waktu_masuk ? new Date(t.waktu_masuk).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
                   </td>
                   <td className="py-3 px-4 text-right flex gap-2 justify-end">
-                    <button onClick={() => handleKeluar(t._id)}
+                    <button onClick={() => handleKeluar(t._id, t.nama_tamu)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors border border-green-200">
                       <LogOut size={14} /> Keluar
                     </button>
@@ -342,13 +431,13 @@ const InputTamu = () => {
                       </button>
                     )}
                     {t.status === 'luar' && (
-                      <button onClick={() => handleMasuk(t._id)}
+                      <button onClick={() => handleMasuk(t._id, t.nama_tamu)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors border border-orange-200">
                         <LogIn size={14} /> Masuk
                       </button>
                     )}
                     {t.status === 'dalam' && (
-                      <button onClick={() => handleKeluar(t._id)}
+                      <button onClick={() => handleKeluar(t._id, t.nama_tamu)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors border border-green-200">
                         <LogOut size={14} /> Keluar
                       </button>

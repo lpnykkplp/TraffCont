@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
         const logs = await LogAktivitas.find()
             .sort({ waktu: -1 })
             .limit(20)
+            .select('pejabat_id tamu_id status waktu foto_bukti')
             .populate('pejabat_id', 'nama jabatan merk_hp tipe_hp custom_id')
             .populate('tamu_id', 'nama_tamu jabatan asal_instansi jenis_perangkat merk');
 
@@ -32,7 +33,8 @@ router.get('/', async (req, res) => {
                     perangkat: `${log.pejabat_id.merk_hp || ''} ${log.pejabat_id.tipe_hp || ''}`.trim(),
                     custom_id: log.pejabat_id.custom_id,
                     status: log.status,
-                    waktu: log.waktu
+                    waktu: log.waktu,
+                    foto_bukti: log.foto_bukti || null
                 };
             } else if (log.tamu_id) {
                 return {
@@ -43,7 +45,8 @@ router.get('/', async (req, res) => {
                     perangkat: `${log.tamu_id.jenis_perangkat} - ${log.tamu_id.merk}`,
                     custom_id: log.tamu_id.asal_instansi,
                     status: log.status,
-                    waktu: log.waktu
+                    waktu: log.waktu,
+                    foto_bukti: log.foto_bukti || null
                 };
             } else {
                 return {
@@ -54,7 +57,8 @@ router.get('/', async (req, res) => {
                     perangkat: '-',
                     custom_id: '-',
                     status: log.status,
-                    waktu: log.waktu
+                    waktu: log.waktu,
+                    foto_bukti: null
                 };
             }
         });

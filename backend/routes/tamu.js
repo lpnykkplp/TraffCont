@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Tamu = require('../models/Tamu');
 const LogAktivitas = require('../models/LogAktivitas');
+const { uploadBase64 } = require('../lib/cloudUpload');
 
 // Get all guest records (optionally filter by status)
 router.get('/', async (req, res) => {
@@ -44,6 +45,11 @@ router.put('/:id/masuk', async (req, res) => {
         const tamu = await Tamu.findById(req.params.id);
         if (!tamu) return res.status(404).json({ message: 'Data tamu tidak ditemukan' });
         
+        let fotoUrl = null;
+        if (req.body.foto_bukti) {
+            fotoUrl = await uploadBase64(req.body.foto_bukti);
+        }
+
         tamu.status = 'dalam';
         tamu.waktu_masuk = new Date();
         tamu.waktu_keluar = null;
@@ -52,10 +58,11 @@ router.put('/:id/masuk', async (req, res) => {
         await new LogAktivitas({
             tamu_id: tamu._id,
             status: 'masuk',
-            waktu: new Date()
+            waktu: new Date(),
+            foto_bukti: fotoUrl
         }).save();
 
-        res.json({ message: 'Perangkat tamu berhasil dicatat MASUK', tamu });
+        res.json({ message: 'Perangkat berhasil dicatat MASUK', tamu });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -67,6 +74,11 @@ router.put('/:id/keluar', async (req, res) => {
         const tamu = await Tamu.findById(req.params.id);
         if (!tamu) return res.status(404).json({ message: 'Data tamu tidak ditemukan' });
         
+        let fotoUrl = null;
+        if (req.body.foto_bukti) {
+            fotoUrl = await uploadBase64(req.body.foto_bukti);
+        }
+
         tamu.status = 'luar';
         tamu.waktu_keluar = new Date();
         await tamu.save();
@@ -74,10 +86,11 @@ router.put('/:id/keluar', async (req, res) => {
         await new LogAktivitas({
             tamu_id: tamu._id,
             status: 'keluar',
-            waktu: new Date()
+            waktu: new Date(),
+            foto_bukti: fotoUrl
         }).save();
 
-        res.json({ message: 'Perangkat tamu berhasil dicatat KELUAR', tamu });
+        res.json({ message: 'Perangkat berhasil dicatat KELUAR', tamu });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
