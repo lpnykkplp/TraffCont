@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,14 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(window.innerWidth < 768 ? 0.67 : 1);
+
+  useEffect(() => {
+    const handleResize = () => setZoomLevel(window.innerWidth < 768 ? 0.67 : 1);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -29,7 +37,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+    <div 
+      className="bg-gray-50 flex flex-col justify-center items-center p-4 absolute top-0 left-0"
+      style={{
+        width: `${100 / zoomLevel}vw`,
+        height: `${100 / zoomLevel}vh`,
+        transform: `scale(${zoomLevel})`,
+        transformOrigin: 'top left'
+      }}
+    >
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-center">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">

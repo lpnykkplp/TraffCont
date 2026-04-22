@@ -132,12 +132,12 @@ const InputTamu = () => {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4" onClick={() => setEditingTamu(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-lg font-bold text-gray-900">Edit Data Tamu</h3>
+              <h3 className="text-lg font-bold text-gray-900">Edit Data</h3>
               <button onClick={() => setEditingTamu(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Tamu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                 <input type="text" name="nama_tamu" value={editData.nama_tamu} onChange={handleEditChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
@@ -166,7 +166,7 @@ const InputTamu = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>
                 <input type="text" name="keterangan" value={editData.keterangan} onChange={handleEditChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
@@ -188,8 +188,8 @@ const InputTamu = () => {
       {/* Form Input */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="mb-6 border-b border-gray-100 pb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Input Perangkat Tamu</h1>
-          <p className="text-gray-500 mt-1">Catat perangkat elektronik tamu yang melintas melalui Pintu Utama.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Input Perangkat</h1>
+          <p className="text-gray-500 mt-1">Catat perangkat elektronik yang melintas melalui Pintu Utama.</p>
         </div>
 
         {error && (
@@ -205,14 +205,14 @@ const InputTamu = () => {
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Tamu</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
             <input type="text" name="nama_tamu" required value={formData.nama_tamu} onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Nama pengunjung" />
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Nama" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
             <input type="text" name="jabatan" value={formData.jabatan} onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Jabatan tamu" />
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Jabatan" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Asal Instansi</label>
@@ -237,14 +237,14 @@ const InputTamu = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Samsung, Lenovo, dll" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>
             <input type="text" name="keterangan" value={formData.keterangan} onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" placeholder="Catatan (opsional)" />
           </div>
           <div className="flex items-end">
             <button type="submit" disabled={submitting}
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 text-sm">
-              <UserPlus size={18} /> {submitting ? 'Menyimpan...' : 'Simpan Tamu'}
+              <UserPlus size={18} /> {submitting ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
         </form>
@@ -254,13 +254,13 @@ const InputTamu = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-orange-50/50 flex items-center gap-2">
           <LogIn size={18} className="text-orange-600" />
-          <h2 className="font-bold text-gray-800">Perangkat Tamu di Dalam ({dalamList.length})</h2>
+          <h2 className="font-bold text-gray-800">Perangkat di Dalam ({dalamList.length})</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider">
-                <th className="py-3 px-4 font-semibold">Nama Tamu</th>
+                <th className="py-3 px-4 font-semibold">Nama</th>
                 <th className="py-3 px-4 font-semibold">Instansi</th>
                 <th className="py-3 px-4 font-semibold">Perangkat</th>
                 <th className="py-3 px-4 font-semibold">Waktu Masuk</th>
@@ -288,7 +288,7 @@ const InputTamu = () => {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="5" className="py-8 text-center text-gray-400">Tidak ada perangkat tamu di dalam saat ini.</td></tr>
+                <tr><td colSpan="5" className="py-8 text-center text-gray-400">Tidak ada perangkat di dalam saat ini.</td></tr>
               )}
             </tbody>
           </table>
@@ -299,7 +299,7 @@ const InputTamu = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-2">
           <Package size={18} className="text-gray-600" />
-          <h2 className="font-bold text-gray-800">Semua Data Tamu ({tamuList.length})</h2>
+          <h2 className="font-bold text-gray-800">Semua Data ({tamuList.length})</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
@@ -356,7 +356,7 @@ const InputTamu = () => {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="5" className="py-8 text-center text-gray-400">Belum ada data tamu.</td></tr>
+                <tr><td colSpan="5" className="py-8 text-center text-gray-400">Belum ada data.</td></tr>
               )}
             </tbody>
           </table>
