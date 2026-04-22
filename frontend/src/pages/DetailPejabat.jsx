@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import html2canvas from 'html2canvas';
 import { ArrowLeft, Download, Printer, Smartphone, User, Hash, Box, Phone, Trash2, Pencil, Save, X, ImageDown } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const DetailPejabat = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const DetailPejabat = () => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   const printRef = useRef();
 
   useEffect(() => {
@@ -288,46 +290,51 @@ const DetailPejabat = () => {
           <ArrowLeft size={18} className="mr-2" />
           Kembali
         </button>
+        </button>
         <div className="flex gap-2">
-          {!editing ? (
-            <button 
-              onClick={startEdit}
-              className="flex items-center text-blue-600 hover:text-white transition-colors bg-blue-50 hover:bg-blue-600 px-4 py-2 rounded-xl text-sm font-medium"
-            >
-              <Pencil size={18} className="mr-2" />
-              Edit
-            </button>
-          ) : (
+          {user?.role === 'Admin' && (
             <>
+              {!editing ? (
+                <button 
+                  onClick={startEdit}
+                  className="flex items-center text-blue-600 hover:text-white transition-colors bg-blue-50 hover:bg-blue-600 px-4 py-2 rounded-xl text-sm font-medium"
+                >
+                  <Pencil size={18} className="mr-2" />
+                  Edit
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={handleSave} disabled={saving}
+                    className="flex items-center text-green-600 hover:text-white transition-colors bg-green-50 hover:bg-green-600 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
+                  >
+                    <Save size={18} className="mr-2" />
+                    {saving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                  <button 
+                    onClick={cancelEdit}
+                    className="flex items-center text-gray-500 hover:text-gray-900 transition-colors bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-xl text-sm font-medium"
+                  >
+                    <X size={18} className="mr-2" />
+                    Batal
+                  </button>
+                </>
+              )}
               <button 
-                onClick={handleSave} disabled={saving}
-                className="flex items-center text-green-600 hover:text-white transition-colors bg-green-50 hover:bg-green-600 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
+                onClick={handleDelete}
+                className="flex items-center text-red-600 hover:text-white transition-colors bg-red-50 hover:bg-red-600 px-4 py-2 rounded-xl text-sm font-medium"
               >
-                <Save size={18} className="mr-2" />
-                {saving ? 'Menyimpan...' : 'Simpan'}
-              </button>
-              <button 
-                onClick={cancelEdit}
-                className="flex items-center text-gray-500 hover:text-gray-900 transition-colors bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-xl text-sm font-medium"
-              >
-                <X size={18} className="mr-2" />
-                Batal
+                <Trash2 size={18} className="mr-2" />
+                Hapus
               </button>
             </>
           )}
-          <button 
-            onClick={handleDelete}
-            className="flex items-center text-red-600 hover:text-white transition-colors bg-red-50 hover:bg-red-600 px-4 py-2 rounded-xl text-sm font-medium"
-          >
-            <Trash2 size={18} className="mr-2" />
-            Hapus
-          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Detail Info Card */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className={`${user?.role === 'Admin' ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden`}>
           <div className="p-6 border-b border-gray-50 flex items-center gap-4 bg-gradient-to-r from-gray-50 to-white">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-white">
               {pejabat.nama.charAt(0).toUpperCase()}
@@ -411,33 +418,35 @@ const DetailPejabat = () => {
         </div>
 
         {/* QR Code Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-50"></div>
-          <div className="z-10 bg-white p-6 rounded-2xl shadow-md border-2 border-dashed border-blue-200 mb-6">
-             <img src={pejabat.qr_code} alt="QR Code" className="w-48 h-48 object-contain" />
+        {user?.role === 'Admin' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-50"></div>
+            <div className="z-10 bg-white p-6 rounded-2xl shadow-md border-2 border-dashed border-blue-200 mb-6">
+               <img src={pejabat.qr_code} alt="QR Code" className="w-48 h-48 object-contain" />
+            </div>
+            
+            <div className="z-10 w-full space-y-3">
+               <button 
+                  onClick={handlePrint}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-medium shadow-md transition-all active:scale-95"
+                >
+                  <Printer size={18} /> Cetak ID Card
+               </button>
+               <button 
+                  onClick={handleDownload}
+                  className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 py-3 px-4 rounded-xl font-medium shadow-sm transition-all"
+                >
+                  <Download size={18} /> Download QR Code
+               </button>
+               <button 
+                  onClick={downloadIdCard}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-3 px-4 rounded-xl font-medium shadow-md transition-all active:scale-95"
+                >
+                  <ImageDown size={18} /> Download ID Card PNG
+               </button>
+            </div>
           </div>
-          
-          <div className="z-10 w-full space-y-3">
-             <button 
-                onClick={handlePrint}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-medium shadow-md transition-all active:scale-95"
-              >
-                <Printer size={18} /> Cetak ID Card
-             </button>
-             <button 
-                onClick={handleDownload}
-                className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 py-3 px-4 rounded-xl font-medium shadow-sm transition-all"
-              >
-                <Download size={18} /> Download QR Code
-             </button>
-             <button 
-                onClick={downloadIdCard}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-3 px-4 rounded-xl font-medium shadow-md transition-all active:scale-95"
-              >
-                <ImageDown size={18} /> Download ID Card PNG
-             </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

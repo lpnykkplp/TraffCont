@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { UserPlus, LogIn, LogOut, Trash2, Building2, Smartphone, Laptop, Tablet, HardDrive, Usb, Package, AlertCircle, CheckCircle, Pencil, Save, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const jenisIcons = {
   HP: <Smartphone size={16} />,
@@ -17,6 +18,7 @@ const InputTamu = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     nama_tamu: '',
     jabatan: '',
@@ -332,11 +334,13 @@ const InputTamu = () => {
                       {t.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right flex gap-2 justify-end">
-                    <button onClick={() => openEdit(t)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors border border-blue-200">
-                      <Pencil size={14} /> Edit
-                    </button>
+                  <td className="py-3 px-4 text-right flex gap-2 justify-end items-center flex-wrap">
+                    {user?.role === 'Admin' && (
+                      <button onClick={() => openEdit(t)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors border border-blue-200">
+                        <Pencil size={14} /> Edit
+                      </button>
+                    )}
                     {t.status === 'luar' && (
                       <button onClick={() => handleMasuk(t._id)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors border border-orange-200">
@@ -349,10 +353,12 @@ const InputTamu = () => {
                         <LogOut size={14} /> Keluar
                       </button>
                     )}
-                    <button onClick={() => handleDelete(t._id)}
-                      className="inline-flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition-colors border border-red-200">
-                      <Trash2 size={14} />
-                    </button>
+                    {user?.role === 'Admin' && (
+                      <button onClick={() => handleDelete(t._id)}
+                        className="inline-flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition-colors border border-red-200">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               )) : (
