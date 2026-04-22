@@ -54,12 +54,14 @@ const dashboardRoutes = require('./routes/dashboard');
 const tamuRoutes = require('./routes/tamu');
 const laporanRoutes = require('./routes/laporan');
 const authRoutes = require('./routes/auth');
+const logsRoutes = require('./routes/logs');
 const authMiddleware = require('./middleware/auth');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/pejabat', authMiddleware, pejabatRoutes);
 app.use('/api/scan', authMiddleware, scanRoutes);
 app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/logs', authMiddleware, logsRoutes);
 app.use('/api/tamu', authMiddleware, tamuRoutes);
 app.use('/api/laporan', authMiddleware, laporanRoutes);
 

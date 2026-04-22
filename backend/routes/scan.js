@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
 
         const message = newStatus === 'dalam' ? 'Berhasil masuk' : 'Keluar terdeteksi';
         
-        res.json({ message, pejabat, status: newStatus });
+        res.json({ message, pejabat, status: newStatus, log_id: newLog._id });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

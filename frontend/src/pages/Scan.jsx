@@ -82,17 +82,16 @@ const Scan = () => {
   };
 
   const handleUploadFoto = async () => {
-    if (!fotoBukti || !scanResult) return;
+    if (!fotoBukti || !scannedData?.log_id) return;
     setUploading(true);
     try {
-      await api.post('/api/scan', {
-        qr_code: scanResult,
+      await api.put(`/api/logs/${scannedData.log_id}/photo`, {
         foto_bukti: fotoBukti
       });
       setFotoBukti(null);
       setFotoPreview('uploaded');
     } catch (err) {
-      alert('Gagal mengunggah foto bukti.');
+      alert(err.response?.data?.message || 'Gagal mengunggah foto bukti.');
     } finally {
       setUploading(false);
     }
