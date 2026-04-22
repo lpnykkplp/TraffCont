@@ -6,6 +6,32 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'traffcont_super_secret_key_123';
 
+// @route   GET /api/auth/create-p2u
+// @desc    Temporary route to inject P2U user
+router.get('/create-p2u', async (req, res) => {
+    try {
+        const existingP2U = await User.findOne({ username: 'p2u' });
+        if (existingP2U) {
+            return res.json({ message: 'User P2U sudah ada di database.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('p2uLPNYK', salt);
+
+        const p2u = new User({
+            username: 'p2u',
+            password: hashedPassword,
+            nama: 'Petugas P2U',
+            role: 'Petugas'
+        });
+
+        await p2u.save();
+        res.json({ message: 'User P2U berhasil dibuat dengan sandi p2uLPNYK' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // @route   POST /api/auth/login
 // @desc    Login user & get token
 router.post('/login', async (req, res) => {
