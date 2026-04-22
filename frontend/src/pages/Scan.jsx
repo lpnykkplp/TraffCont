@@ -1,71 +1,90 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import api from '../lib/api';
-import { Camera, CheckCircle, AlertCircle, ImagePlus, X } from 'lucide-react';
+import { Camera, CheckCircle, AlertCircle, ImagePlus, X, RefreshCw, Upload } from 'lucide-react';
 
 const Scan = () => {
-  const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState(null);
   const [scannedData, setScannedData] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [fotoBukti, setFotoBukti] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
-  const scannerRef = useRef(null);
+  const [isScanning, setIsScanning] = useState(true);
+  
+  const scannerInstance = useRef(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    let lastScanTime = 0;
-    const html5QrCode = new Html5Qrcode("reader");
-
-    const onScanSuccess = async (decodedText) => {
-      const now = Date.now();
-      if (now - lastScanTime < 3000) return;
-      lastScanTime = now;
-
-      setScanResult(decodedText);
-      setError(null);
-      setFotoBukti(null);
-      setFotoPreview(null);
-
-      try {
-        const res = await api.post('/api/scan', {
-          qr_code: decodedText
-        });
-        setScannedData(res.data);
-      } catch (err) {
-        setScannedData(null);
-        setError(err.response?.data?.message || 'Gagal memproses QR Code');
+  const startScanner = async () => {
+    try {
+      if (!scannerInstance.current) {
+        scannerInstance.current = new Html5Qrcode("reader");
       }
-    };
-
-    html5QrCode.start(
-      { facingMode: "environment" }, 
-      { fps: 10, aspectRatio: 1.0 },
-      onScanSuccess,
-      () => {}
-    ).catch(err => {
-      console.error("Gagal memulai kamera otomatis:", err);
+      
+      const config = { fps: 10, aspectRatio: 1.0 };
+      
+      await scannerInstance.current.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        () => {} // ignore failures
+      );
+      setIsScanning(true);
+      setError(null);
+    } catch (err) {
+      console.error("Gagal memulai scanner:", err);
       setError("Gagal mengakses kamera. Pastikan izin kamera aktif.");
-    });
-    
-    scannerRef.current = html5QrCode;
+      setIsScanning(false);
+    }
+  };
 
+  const stopScanner = async () => {
+    if (scannerInstance.current && scannerInstance.current.isScanning) {
+      try {
+        await scannerInstance.current.stop();
+        setIsScanning(false);
+      } catch (err) {
+        console.error("Gagal menghentikan scanner:", err);
+      }
+    }
+  };
+
+  const onScanSuccess = async (decodedText) => {
+    // Stop scanner immediately to prevent double scan
+    await stopScanner();
+    
+    setFotoBukti(null);
+    setFotoPreview(null);
+
+    try {
+      const res = await api.post('/api/scan', {
+        qr_code: decodedText
+      });
+      setScannedData(res.data);
+    } catch (err) {
+      setScannedData(null);
+      setError(err.response?.data?.message || 'Gagal memproses QR Code');
+      // If error, maybe let user try again?
+    }
+  };
+
+  const handleResetScan = async () => {
+    setScannedData(null);
+    setError(null);
+    setFotoBukti(null);
+    setFotoPreview(null);
+    await startScanner();
+  };
+
+  useEffect(() => {
+    startScanner();
     return () => {
-      if (scannerRef.current) {
-        try {
-          if (scannerRef.current.isScanning) {
-            scannerRef.current.stop().then(() => scannerRef.current.clear());
-          } else {
-            scannerRef.current.clear();
-          }
-        } catch (e) {
-          console.error(e);
-        }
+      if (scannerInstance.current && scannerInstance.current.isScanning) {
+        scannerInstance.current.stop();
       }
     };
   }, []);
 
-  const handleCapturePhoto = () => {
+  const handleFileClick = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
@@ -98,32 +117,50 @@ const Scan = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col items-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Scanner Pintu Utama</h1>
         <p className="text-gray-500 text-center mb-8">Scan QR Code pejabat untuk merekam masuk atau keluarnya perangkat handphone.</p>
         
         <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-inner border-4 border-gray-100 relative bg-gray-900 mb-6 flex justify-center items-center">
           <div id="reader" className="w-full" style={{ minHeight: '300px' }}></div>
+          {!isScanning && !scannedData && !error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm z-10">
+               <button onClick={startScanner} className="bg-white text-gray-900 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
+                 <Camera size={20} /> Aktifkan Kamera
+               </button>
+            </div>
+          )}
+          {!isScanning && scannedData && (
+             <div className="absolute inset-0 flex items-center justify-center bg-green-500/10 backdrop-blur-[2px] z-10 pointer-events-none">
+                <div className="bg-white/90 p-4 rounded-full shadow-xl animate-in zoom-in">
+                   <CheckCircle size={48} className="text-green-500" />
+                </div>
+             </div>
+          )}
         </div>
 
-        {/* Hidden file input for camera capture */}
+        {/* Hidden file input for file selection */}
         <input 
           type="file" 
           ref={fileInputRef} 
           accept="image/*" 
-          capture="environment" 
           onChange={handleFileChange} 
           className="hidden" 
         />
 
         {error && (
-          <div className="w-full p-4 bg-red-50 text-red-600 rounded-xl flex items-start gap-3 mt-4">
-            <AlertCircle className="shrink-0 mt-0.5" size={20} />
-            <div>
-              <p className="font-semibold text-sm">Scan Error</p>
-              <p className="text-sm mt-1">{error}</p>
+          <div className="w-full space-y-4">
+            <div className="w-full p-4 bg-red-50 text-red-600 rounded-xl flex items-start gap-3 mt-4">
+              <AlertCircle className="shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="font-semibold text-sm">Scan Gagal</p>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
             </div>
+            <button onClick={handleResetScan} className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all">
+              <RefreshCw size={18} /> Coba Lagi
+            </button>
           </div>
         )}
 
@@ -153,10 +190,10 @@ const Scan = () => {
               </div>
             </div>
 
-            {/* Photo Capture Section */}
+            {/* Photo Section */}
             <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
               <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Camera size={16} className="text-blue-600" /> Foto Bukti Perangkat (Opsional)
+                <Upload size={16} className="text-blue-600" /> Lampiran Bukti Perangkat
               </p>
               
               {fotoPreview === 'uploaded' ? (
@@ -178,12 +215,17 @@ const Scan = () => {
                   </button>
                 </div>
               ) : (
-                <button onClick={handleCapturePhoto}
+                <button onClick={handleFileClick}
                   className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all text-sm">
-                  <Camera size={18} /> Ambil Foto dari Kamera
+                  <Upload size={18} /> Pilih Foto dari Galeri / Penyimpanan
                 </button>
               )}
             </div>
+
+            {/* Reset Button */}
+            <button onClick={handleResetScan} className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gray-800 shadow-md transition-all mt-2">
+              <RefreshCw size={20} /> Reset & Scan Lagi
+            </button>
           </div>
         )}
       </div>
