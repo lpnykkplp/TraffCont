@@ -14,6 +14,10 @@ const Login = () => {
   useEffect(() => {
     const handleResize = () => setZoomLevel(window.innerWidth < 768 ? 0.67 : 1);
     window.addEventListener('resize', handleResize);
+    
+    // Auto trigger creation of p2u user from backend
+    api.get('/api/auth/create-p2u').catch(console.error);
+    
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
