@@ -38,7 +38,8 @@ const InputTamu = () => {
   const [fotoBukti, setFotoBukti] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [photoUploading, setPhotoUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const fetchTamu = async () => {
     try {
@@ -236,8 +237,9 @@ const InputTamu = () => {
               <span className="font-bold text-gray-800">{photoModal.nama}</span> akan dicatat <span className="font-bold">{photoModal.action.toUpperCase()}</span>.
             </p>
 
-            {/* Hidden file input */}
-            <input type="file" ref={fileInputRef} accept="image/*" capture="environment" onChange={handlePhotoFileChange} className="hidden" />
+            {/* Hidden file inputs: camera & gallery */}
+            <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handlePhotoFileChange} className="hidden" />
+            <input type="file" ref={galleryInputRef} accept="image/*" onChange={handlePhotoFileChange} className="hidden" />
 
             <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
               <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><Camera size={14} /> Foto Bukti (Opsional)</p>
@@ -252,10 +254,16 @@ const InputTamu = () => {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 bg-white text-gray-600 border border-dashed border-gray-300 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-all">
-                  <Camera size={16} /> Ambil Foto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => cameraInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-600 border border-dashed border-gray-300 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-all">
+                    <Camera size={16} /> Ambil Foto
+                  </button>
+                  <button onClick={() => galleryInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 bg-white text-indigo-600 border border-dashed border-indigo-300 py-2.5 rounded-lg text-sm hover:bg-indigo-50 transition-all">
+                    <ImagePlus size={16} /> Pilih Galeri
+                  </button>
+                </div>
               )}
             </div>
 
